@@ -309,6 +309,10 @@ void ElectronicsElementData::ApplyElement(ElectronicsElementBase & element)
 		SetSpace(element.DefaultSpace());
 	}
 	
+	if (element.NeedsConstSampling() && !m_ConstSampled) {
+		UpdateSampling(true);
+	}
+	
 	//and apply
 	element.ModifyData(m_CurrentSpace, m_DataSize, m_SpaceRe, m_SpaceIm, m_DataRe, m_DataIm, m_Scaling);
 }

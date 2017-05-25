@@ -10,6 +10,7 @@ using namespace Electronics;
 void TestDataSupport(TFile & file, string & path);
 void TestFFT0(TFile & file, string & path);
 void TestDeltaResponseSPar(TFile & file, string & path);
+void TestDeltaResponseSpice(TFile & file, string & path);
 
 bool CompareGraphs(const TGraph & graph1, const TGraph & graph2, double difx, double dify, const char * mes);
 bool CheckFFTMax(const TGraph & real, const TGraph & im, double res, double dif, const char * mes);
@@ -31,6 +32,7 @@ int main()
 		TestDataSupport(pFile, pPath);
 		TestFFT0(pFile, pPath);
 		TestDeltaResponseSPar(pFile, pPath);
+		TestDeltaResponseSpice(pFile, pPath);
 	}
 	catch (std::string ex) {
 		cout << ":Err " << ex << endl;
@@ -154,7 +156,25 @@ void TestDeltaResponseSPar(TFile & file, string & path)
 	}
 	
 	cout << "Done" << endl;
+}
+
+void TestDeltaResponseSpice(TFile & file, string & path)
+{
+	cout << "Delta response spice test... " << endl;
 	
+	file.cd();
+	file.mkdir("DRSpice");
+	file.cd("DRSpice");
+	
+	string pIn = "in";
+	string pOut = "out";
+	
+	ElectronicsPart pPart;
+	pPart.AddElementSpice(path + "spice_rc.txt", pIn, pOut);
+	TGraph pDRes = pPart.GetDeltaResponse(1e-6, 1e-9);
+	pDRes.Write("dres");
+	
+	cout << "Done" << endl;
 }
 
 void Check(bool state)
@@ -196,6 +216,7 @@ bool CompareGraphs(const TGraph & graph1, const TGraph & graph2, double difx, do
 		cout << mes << ": Y-Axis differ up to " << dify << "." << endl;
 		return false;
 	}
+	return true;
 }
 
 bool CheckFFTMax(const TGraph & real, const TGraph & im, double res, double dif, const char * mes)
@@ -236,7 +257,6 @@ bool CheckFFTMax(const TGraph & real, const TGraph & im, double res, double dif,
 void GetMax(const TGraph & graph, double & max, double & min)
 {
 	double x,y;
-	double pMax = 0;
 	graph.GetPoint(0, x, y);
 	max = y;
 	min = y;

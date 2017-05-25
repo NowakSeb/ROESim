@@ -16,14 +16,6 @@ ElectronicsElementBase::~ElectronicsElementBase()
 	
 }
 
-// void ElectronicsElementBase::Process(Electronics::ElectronicsElementData & data)
-// {
-// 	//check for space and sampling -> todo
-// 	
-// 	ProcessElement(data);
-// }
-
-
 string ElectronicsElementBase::ReadLine(ifstream & file)
 {
 	char pChar;

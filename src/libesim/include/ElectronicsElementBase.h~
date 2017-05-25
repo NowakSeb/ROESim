@@ -49,6 +49,12 @@ namespace Electronics
 		
 	protected:
 		
+		void SetName(const string & name)
+		{
+			size_t pPos = name.rfind("/");
+			m_Name = name.substr(pPos+1, name.size());
+		}
+		
 		//read line from file
 		static std::string ReadLine(std::ifstream & file);
 		//read line from file, ignoring lines starting with comment

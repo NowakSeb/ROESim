@@ -309,6 +309,10 @@ void ElectronicsElementData::ApplyElement(ElectronicsElementBase & element)
 		SetSpace(element.DefaultSpace());
 	}
 	
+	if (element.NeedsConstSampling() && !m_ConstSampled) {
+		UpdateSampling(true);
+	}
+	
 	//and apply
 	element.ModifyData(m_CurrentSpace, m_DataSize, m_SpaceRe, m_SpaceIm, m_DataRe, m_DataIm, m_Scaling);
 }
@@ -501,6 +505,7 @@ void ElectronicsElementData::PrintDataInfo()
 	cout << "Data points: " << m_Scaling << endl;
 	
 	if (m_CurrentSpace == Space::TIME) {
+		cout << "todo...";
 	}
 	if (m_CurrentSpace == Space::FOURIER) {
 		double pMaxSignal = 0;

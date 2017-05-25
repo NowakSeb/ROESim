@@ -7,6 +7,8 @@
 
 #include "ElectronicsElementBase.h"
 
+//todo: input and output resistance
+
 namespace Electronics
 {
 	class ElectronicsElementSPar : public ElectronicsElementBase

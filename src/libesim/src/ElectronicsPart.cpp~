@@ -32,7 +32,8 @@ void ElectronicsPart::Process(TGraph & input, double ticks, bool sort)
 
 // 	apply elements
 	for(pIt = m_Elements.begin(); pIt != m_Elements.end(); pIt++) {
-		pData.ApplyElement(**pIt);
+		cout << "sdddd";
+//		pData.ApplyElement(**pIt);
 	}
 	
 	//and get final output

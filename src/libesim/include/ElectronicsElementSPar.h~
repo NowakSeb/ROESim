@@ -7,6 +7,9 @@
 
 #include "ElectronicsElementBase.h"
 
+//todo: input and output resistance
+
+
 namespace Electronics
 {
 	class ElectronicsElementSPar : public ElectronicsElementBase
@@ -14,8 +17,8 @@ namespace Electronics
 	public:
 		
 		// Constructor
-		ElectronicsElementSPar(const std::string & file, unsigned int channel, double cutoff);
-		ElectronicsElementSPar(const char * file, unsigned int channel, double cutoff);
+		ElectronicsElementSPar(const std::string & file, unsigned int channel, double cutoff = 0);
+		ElectronicsElementSPar(const char * file, unsigned int channel, double cutoff = 0);
 		
 		// Destructor
 		virtual ~ElectronicsElementSPar();

@@ -6,10 +6,9 @@
 using namespace Electronics;
 using namespace std;
 
-ElectronicsElementBase::ElectronicsElementBase(ElectronicsElementBase * previous)
+ElectronicsElementBase::ElectronicsElementBase()
 {
 	m_ConstSampling = true;
-	m_PreviousElement = previous
 }
 
 ElectronicsElementBase::~ElectronicsElementBase()

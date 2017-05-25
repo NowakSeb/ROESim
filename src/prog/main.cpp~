@@ -28,7 +28,7 @@ int main()
 // 	pGraph.Write("orig");
 	try {
 		ElectronicsPart pPart;
-		pPart.AddElementSParameter("../ASBD.s2p",1, 1e9);
+		pPart.AddElementSParameter("../../testdata/ASD.s2p",1, 0);
 		pPart.StoreTransferData(pFile);
 		TGraph pDRes = pPart.GetDeltaResponse(1e-6, 1e-9);
 		pDRes.Write("dres");

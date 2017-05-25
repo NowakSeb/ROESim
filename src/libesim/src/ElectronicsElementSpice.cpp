@@ -1,0 +1,43 @@
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <fstream>
+
+#include <TMath.h>
+
+#include "ElectronicsElementSpice.h"
+
+using namespace Electronics;
+using namespace std;
+
+ElectronicsElementSpice::ElectronicsElementSpice(const std::string & file, string & input, string & output)
+{
+	Init(file, input, output);
+}
+
+ElectronicsElementSpice::~ElectronicsElementSpice()
+{
+	
+}
+
+void ElectronicsElementSpice::StoreTransferData(TFile & file)
+{
+	
+}
+
+void ElectronicsElementSpice::ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling)
+{
+
+	
+}
+
+void ElectronicsElementSpice::Init(const string & file, string & input, string & output)
+{
+	SetName(file);
+	m_ConstSampling = false; //spice takes everything
+	//accepts only fourier space data
+	m_SpaceCapability.push_back(Space::FOURIER);
+	
+}

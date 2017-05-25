@@ -72,12 +72,6 @@ void GetColumnData(const string & input, double & freq, double & first, double &
 	}
 }
 
-void CutName(string & name)
-{
-	size_t pPos = name.rfind("/");
-	name = name.substr(pPos+1, name.size());
-}
-
 void ElectronicsElementSPar::AddToTGraphs(double freq, double x, double y, bool db, bool angle)
 {
 	if (db) {
@@ -98,8 +92,6 @@ ElectronicsElementSPar::ElectronicsElementSPar(const std::string & file, unsigne
 {
 	m_CutOffFreq = cutoff;
 	Init();
-	m_Name = file;
-	CutName(m_Name);
 	Read(file, channel);
 }
 
@@ -107,8 +99,7 @@ ElectronicsElementSPar::ElectronicsElementSPar(const char * file, unsigned int c
 {
 	m_CutOffFreq = cutoff;
 	Init();
-	m_Name = string(file);
-	CutName(m_Name);
+	SetName(file);
 	Read(string(file), channel);
 }
 
@@ -229,125 +220,6 @@ void ElectronicsElementSPar::ModifyData(Space space, unsigned int size, double *
 		double pIm = pScatRe * dataim[i] + pScatIm * datare[i];
 		datare[i] = pReal;
 		dataim[i] = pIm;
-		
-// 		double pMag = TMath::Sqrt(datare[i]*datare[i] + dataim[i] * dataim[i]);
-// 		double pAngle = TMath::ATan(dataim[i]/datare[i]);
-// 
-// 		pMag *= pScatRe;
-// 		pAngle += pScatIm/180*TMath::Pi();
-// 		
-// 		datare[i] = pMag * TMath::Cos(pAngle);
-// 		dataim[i] = pMag * TMath::Sin(pAngle);
-		
-		
-		//cout << pFreq << " " << datare[i] << " " << pScatRe << endl;
-// 		cout << pScatIm <<  endl;
 	}
 	
 }
-
-
-// void PulseBase::LoadParaFile(std::string file, bool dB)
-// {
-// 	ifstream pFile;
-// 	unsigned int pFirstLine = 5;
-// 	std::vector<data_triple> pParameter[SORDER];
-// 	TGraph * pMagGraph[SORDER];
-// 	TGraph * pPhaseGraph[SORDER];
-// 	
-// 	pFile.open(file.c_str());
-// 	
-// 	if (!pFile.good())
-// 	{
-// 		stringstream pStream;
-// 		pStream << "Error opening file. Does this file exist? File: " << file << endl;
-// 		cerr << pStream.str();
-// 		throw(pStream.str());
-// 	}
-// 	
-// 	for(unsigned int i = 0; i < pFirstLine; i++)
-// 	{
-// 		string pString = ReadLine(pFile);
-// 	}
-// 	
-// 	while(pFile.good())
-// 	{
-// 		string pString = ReadLine(pFile);
-// 		stringstream pStream;
-// 		data_triple pTriple[4];
-// 		
-// 		pStream << pString;
-// 		pStream >> pTriple[0].frequency;
-// 		if (pTriple[0].frequency == 0)
-// 		{
-// 			break;
-// 		}
-// 		for(unsigned int i = 0; i < SORDER; i++)
-// 		{
-// 			pTriple[i].frequency = pTriple[0].frequency;
-// 			// 			cout << pTriple[i].frequency << endl;
-// 			pStream >> pTriple[i].x >> pTriple[i].y;
-// 			pParameter[i].push_back(pTriple[i]);
-// 		}
-// 	}
-// 	
-// 	for(unsigned int i = 0; i < SORDER; i++)
-// 	{
-// 		pMagGraph[i] = new TGraph(pParameter[i].size());
-// 		pPhaseGraph[i] = new TGraph(pParameter[i].size());
-// 	}
-// 	
-// 	for(unsigned int j = 0; j < pParameter[0].size(); j++)
-// 	{
-// 		for(unsigned int i = 0; i < SORDER; i++)
-// 		{
-// 			if (dB)
-// 			{
-// 				pParameter[i][j].x = dB2Gain(pParameter[i][j].x);
-// 			}
-// 			else
-// 			{
-// 				pParameter[i][j].x = pParameter[i][j].x;
-// 			}
-// 			pParameter[i][j].y = degree2rad(pParameter[i][j].y);
-// 			pMagGraph[i]->SetPoint(j, pParameter[i][j].frequency, pParameter[i][j].x);
-// 			pPhaseGraph[i]->SetPoint(j, pParameter[i][j].frequency, pParameter[i][j].y);
-// 		}
-// 	}
-// 	
-// 	if (mFile != NULL)
-// 	{
-// 		mFile->cd(DIR_SPARA);
-// 		for(unsigned int i = 0; i < SORDER; i++)
-// 		{
-// 			stringstream pNameAmp, pNamePhase;
-// 			pNameAmp << file << "_mag_" << i;
-// 			pNamePhase << file << "_phase_" << i;
-// 			pMagGraph[i]->SetTitle(file.c_str());
-// 			pPhaseGraph[i]->SetTitle(file.c_str());
-// 			pMagGraph[i]->Write(pNameAmp.str().c_str());
-// 			pPhaseGraph[i]->Write(pNamePhase.str().c_str());
-// 			if (i != 1)
-// 			{
-// 				delete pMagGraph[i];
-// 				delete pPhaseGraph[i];
-// 			}
-// 		}
-// 	}
-// 	
-// 	//just transform are necessary
-// 	mMagTransform.push_back(pMagGraph[1]);
-// 	mPhaseTransform.push_back(pPhaseGraph[1]);
-// 	
-// 	//cut off frequencies
-// 	data_pair pLimit;
-// 	double x, y;
-// 	
-// 	pMagGraph[1]->GetPoint(0, x, y);
-// 	pLimit.x = x;
-// 	pMagGraph[1]->GetPoint(pMagGraph[1]->GetN()-1, x, y);
-// 	pLimit.y = x;
-// 	
-// 	mCutOffFrequencies.push_back(pLimit);
-// 	
-// }

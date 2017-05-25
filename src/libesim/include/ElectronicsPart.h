@@ -7,6 +7,7 @@
 //#include "ElectronicsElementBase.h"
 #include "ElectronicsElementData.h"
 #include "ElectronicsElementSPar.h"
+#include "ElectronicsElementSpice.h"
 
 namespace Electronics
 {
@@ -29,7 +30,18 @@ namespace Electronics
 		{
 			AddElement(new ElectronicsElementSPar(file, channel, cutoff));
 		}
-	
+
+		/**
+		 * add spice circuit
+		 * @param file filename 
+		 * @param input name of input net
+		 * @param output name of output net
+		 */
+		void AddElementSpice(const std::string & file, std::string & input, std::string & output)
+		{
+			AddElement(new ElectronicsElementSpice(file, input, output));
+		}
+		
 		/**
 		 * @param input data in time space
 		 * @param ticks time unit in seconds
