@@ -1,0 +1,68 @@
+#ifndef _ELECTRONICSELEMENTBASE_H_
+#define _ELECTRONICSELEMENTBASE_H_
+
+#include <fstream>
+#include <TFile.h>
+#include <TGraph.h>
+
+// #include "ElectronicsElementData.h"
+
+namespace Electronics
+{
+	enum class Space {TIME, FOURIER}; 
+	
+	class ElectronicsElementBase
+	{
+	public:
+		
+		// Constructor
+		ElectronicsElementBase();
+		// Destructor
+		virtual ~ElectronicsElementBase();
+		
+// 		//process data
+// 		void Process(Electronics::ElectronicsElementData & data);
+		
+		virtual void StoreTransferData(TFile & file) = 0;
+		
+		//routine for data modification
+		virtual void ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling) = 0;
+		
+		//does this instance needs constant sampling
+		bool NeedsConstSampling()
+		{
+			return m_ConstSampling;
+		}
+		
+		//does this instance accepts fft data
+		bool CapableOfSpace(Electronics::Space space);
+		
+		//returns default space (used if current space is not supported)
+		Space DefaultSpace()
+		{
+			return m_SpaceCapability[0];
+		}
+
+//		void AddInputNoise();
+
+//		void AddOutputNoise();
+		
+	protected:
+		
+		//read line from file
+		static std::string ReadLine(std::ifstream & file);
+		//read line from file, ignoring lines starting with comment
+		static std::string NextLine(std::ifstream & file, char comment = '!');
+		//instance namespace
+		std::string m_Name;
+		//does this element needs constantant sampling; true if yes
+		bool m_ConstSampling;
+		//list of spaces this element accepts
+		std::vector<Electronics::Space> m_SpaceCapability;
+		
+	};
+}
+
+
+
+#endif

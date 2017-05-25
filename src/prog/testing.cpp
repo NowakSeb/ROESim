@@ -1,0 +1,252 @@
+#include <iostream>
+#include <TFile.h>
+#include <TMath.h>
+#include "ElectronicsElementData.h"
+#include "ElectronicsPart.h"
+
+using namespace std;
+using namespace Electronics;
+
+void TestDataSupport(TFile & file, string & path);
+void TestFFT0(TFile & file, string & path);
+void TestDeltaResponseSPar(TFile & file, string & path);
+
+bool CompareGraphs(const TGraph & graph1, const TGraph & graph2, double difx, double dify, const char * mes);
+bool CheckFFTMax(const TGraph & real, const TGraph & im, double res, double dif, const char * mes);
+
+void Check(bool state);
+void GetMax(const TGraph & graph, double & max, double & min);
+
+int main()
+{
+	TFile pFile("report.root", "RECREATE");
+	string pPath = "../../testdata/";
+	//ElectronicsElementSPar pSPar("test.s2p", 1);
+	//pSPar.StoreTransferData(pFile);
+// 	TGraph pGraph, pGraph1;
+// 	FillGraph(pGraph, pGraph1);
+// 	pFile.cd();
+// 	pGraph.Write("orig");
+	try {
+		TestDataSupport(pFile, pPath);
+		TestFFT0(pFile, pPath);
+		TestDeltaResponseSPar(pFile, pPath);
+	}
+	catch (std::string ex) {
+		cout << ":Err " << ex << endl;
+	}
+	
+	pFile.cd();
+// 	pGraph.Write("data");
+	return 0;
+}
+
+void TestDataSupport(TFile & file, string & path)
+{
+	TGraph pInput(3), pInit;
+	double pSpacing = 1e-9;
+
+	cout << "Test data support functions... " << endl;
+	file.cd();
+	file.mkdir("TestSupport");
+	file.cd("TestSupport");
+	
+	pInput.SetPoint(0,0,1./pSpacing);
+	pInput.SetPoint(1,pSpacing,0);
+	pInput.SetPoint(2,999*pSpacing,0);
+	pInput.Write("input");
+
+	ElectronicsElementData pData(pInput, 1);
+	pInit = pData.GetDataTGraph();
+	pInit.Write("init");
+	
+	if (pInit.GetN() != 1000) {
+		cout << "Error with sampling. " << pInit.GetN() << " datapoints instead of 1000." << endl;
+		throw string("Error");
+	}
+
+	if (pData.GetSampling() != pSpacing) {
+		cout << "Error with sampling. " << pData.GetSampling() << " time between points instead of " << pSpacing << "." << endl;
+		throw string("Error");
+	}
+	
+	cout << "Done." << endl;
+}
+
+void TestFFT0(TFile & file, string & path)
+{
+	//test correspondance of foward and backward FFT:
+	// - values do not differ more than 1e-9
+	// - same number of points
+	//test scaling
+	//test foward FFT time axis (with max frequency)
+
+	cout << "FFT0 Test... " << endl;
+	
+	TGraph pInput, pInit, pFFTR, pFFTI, pOutput;
+	vector<TString> pFiles;
+	vector<double> pMax;
+	
+	pFiles.push_back(path + "20MHz.txt");
+	pMax.push_back(1.99601e+07);
+	pFiles.push_back(path + "Pulse1.txt");
+	pMax.push_back(2.00016);
+	
+	file.cd();
+	file.mkdir("FFT0");
+	file.cd("FFT0");
+
+	for(unsigned int i = 0; i < pFiles.size(); i++) {
+		pInput = TGraph(pFiles[i]);
+		
+		pInput.Write(TString::Format("input_%i", i));
+		//run 
+		ElectronicsElementData pData(pInput, 1e-3);
+		pInit = pData.GetDataTGraph();
+		pInit.Write(TString::Format("init_%i", i));
+		Check(CompareGraphs(pInput, pInit, 0, 0, "Input vs. init graph"));
+		
+		pData.SetSpace(Space::FOURIER);
+		pData.GetDataTGraph(pFFTR, pFFTI);
+		pFFTR.Write(TString::Format("FFT_real_%i", i));
+		pFFTI.Write(TString::Format("FFT_im_%i", i));
+
+		if (pData.GetScaling() != 1e3) {
+			cout << "Scaling gives the wrong result. " << pData.GetScaling() << " instead of 1e3.";
+			throw string("Fail!");
+		}
+//		pData.PrintDataInfo();
+		
+		Check(CheckFFTMax(pFFTR, pFFTI, pMax[i], 100, "FFT frequency check"));
+		
+		//check scaling
+		pData.SetSpace(Space::TIME);
+		pOutput = pData.GetDataTGraph();
+		pOutput.Write(TString::Format("output_%i", i));
+		Check(CompareGraphs(pInit, pOutput, 0, 0, "Init vs. FFT-rFFT graph"));
+	}
+	
+	cout << "Done." << endl;
+}
+
+void TestDeltaResponseSPar(TFile & file, string & path)
+{
+	cout << "Delta response spar test... " << endl;
+	
+	file.cd();
+	file.mkdir("DRSP");
+	file.cd("DRSP");
+	
+	ElectronicsPart pPart;
+	pPart.AddElementSParameter(path + "ASD.s2p",1, 0);
+ 	TGraph pDRes = pPart.GetDeltaResponse(1e-6, 1e-9);
+ 	pDRes.Write("dres");
+	
+	double pMin, pMax;
+	GetMax(pDRes, pMax, pMin);
+	
+	if (pMin < -3261.23 || pMin > -3261.22) {
+		cout << "Min test: " << pMin << " instead of -3261.22." << endl;
+	}
+
+	if (pMax < 16325.2 || pMax > 16325.3) {
+		cout << "Max test: " << pMax << " instead of 16325.2." << endl;
+	}
+	
+	cout << "Done" << endl;
+	
+}
+
+void Check(bool state)
+{
+	if (state != true) {
+		throw string("Fail!");
+	}
+}
+
+
+bool CompareGraphs(const TGraph & graph1, const TGraph & graph2, double difx, double dify, const char * mes)
+{
+	if (graph1.GetN() != graph2.GetN()) {
+		cout << mes << ": Datapoint count does not fit.";
+		return false;
+	}
+	
+	double pMaxX = 0;
+	double pMaxY = 0;
+	for(int i = 0; i < graph1.GetN(); i++) {
+		double x1, x2, y1, y2;
+		double pDeltaX, pDeltaY;
+		graph1.GetPoint(i, x1, y1);
+		graph2.GetPoint(i, x2, y2);
+		pDeltaX = TMath::Abs(x2 - x1);
+		pDeltaY = TMath::Abs(y2 - y1);
+		if (pDeltaX > pMaxX) {
+			pDeltaX = pMaxX;
+		}
+		if (pDeltaY > pMaxY) {
+			pDeltaY = pMaxY;
+		}
+	}
+	if (pMaxX > difx) {
+		cout << mes << ": X-Axis differ up to " << difx << "." << endl;
+		return false;
+	}
+	if (pMaxY > dify) {
+		cout << mes << ": Y-Axis differ up to " << dify << "." << endl;
+		return false;
+	}
+}
+
+bool CheckFFTMax(const TGraph & real, const TGraph & im, double res, double dif, const char * mes)
+{
+	double pMaxSignal = 0;
+	double pMaxFreq = 0;
+	
+	if (real.GetN() != im.GetN()) {
+		cout << mes << ": real and im datapoint count does not fit." << endl;
+		return false;
+	}
+	
+	for(int i = 0; i < real.GetN(); i++) {
+		double x1, x2, y1, y2;
+		double pVal;
+		real.GetPoint(i, x1, y1);
+		im.GetPoint(i, x2, y2);
+		
+		if (x1 != x2) {
+			cout << mes << ": real and im freq does not fit. " << endl;
+			return false;
+		}
+		
+		pVal = TMath::Sqrt(y1*y1+y2*y2);
+		if (pVal > pMaxSignal) {
+			pMaxSignal = pVal;
+			pMaxFreq = x1;
+		}
+	}
+	if (TMath::Abs(pMaxFreq - res) > dif) {
+		cout << mes << ": Max frequency is wrong. " << pMaxFreq << " instead of " << res << endl;
+		return false;
+	}
+	
+	return true;
+}
+
+void GetMax(const TGraph & graph, double & max, double & min)
+{
+	double x,y;
+	double pMax = 0;
+	graph.GetPoint(0, x, y);
+	max = y;
+	min = y;
+	for(int i = 1; i < graph.GetN(); i++) {
+		graph.GetPoint(i, x, y);
+		if (y > max) {
+			max = y;
+		}
+		if (y < min) {
+			min = y;
+		}
+	}
+}

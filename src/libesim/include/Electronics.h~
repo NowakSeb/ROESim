@@ -1,0 +1,40 @@
+#ifndef _ELECTRONICS_H_
+#define _ELECTRONICS_H_
+
+#include <vector>
+
+//#include "ElectronicsElementBase.h"
+#include "ElectronicsElementData.h"
+#include "ElectronicsElementSPar.h"
+
+namespace Electronics
+{
+	class Electronics
+	{
+	public:
+		
+		Electronics(Precision precision = Precision::FULL);
+
+		// Destructor
+		virtual ~Electronics();
+		
+		void AddElementSParameter(const std::string & file, unsigned int channel)
+		{
+			AddElement(new Electronics::ElectronicsElementSPar(file, channel));
+		}
+	
+		void Process(TGraph & input);
+		
+	protected:
+		
+		void AddElement(ElectronicsElementBase * element);
+		
+		//list of all elements
+		std::vector<ElectronicsElementBase *> mElements;
+		
+	};
+}
+
+
+
+#endif

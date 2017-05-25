@@ -1,0 +1,42 @@
+VERSION = 0.01
+CXX = g++ -fmessage-length=0 
+CXXFLAGS = -Wall -DVERSION=\"$(VERSION)\" -Wno-write-strings `root-config --cflags` `root-config --glibs` -I../esim/include
+OPT = -O2
+LDFLAGS = -lm -lpthread `root-config --libs` -lPhysics -lMinuit2 -lRooFitCore -lRooFit -lngspice
+
+LIBINCLUDE = -L../bin
+
+LIBESIM=-lesim
+PROGSRC = main
+
+
+all:
+	make lib
+	make prog
+	make compile
+
+lib:
+	cd ../esim/src;
+	$(eval SRCS=$(shell ls ../esim/src/*.cpp))
+#	$(eval SRCS=$(shell ls $</src/*.cpp))
+	echo $(SRCS)
+	make COMPLIB OBJ='$(subst .cpp,.o, $(SRCS))' LIB=$<
+
+COMPLIB: $(OBJ)
+	echo $(OBJ)
+	ar -rs ../bin/libesim.a $^
+	
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -c $< -o $(subst .cpp,.o, $<)
+	
+prog: $(PROGSRC).cpp
+	$(CXX) -o $(PROGSRC).o $(LDFLAGS) $(LIBS) $(ROOTLIBS) $(LIBESIM) $(LIBINCLUDE)
+	
+
+clean:
+#	rm $(OBJDIR)
+	rm -f $(OBJ)
+	rm -f $(OBJP)
+	rm -f lib$(LIBNAME).a
+	rm -r -f $(BIN)
+	rm -f *.bak *~
