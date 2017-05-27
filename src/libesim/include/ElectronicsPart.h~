@@ -37,7 +37,7 @@ namespace Electronics
 		 * @param input name of input net
 		 * @param output name of output net
 		 */
-		void AddElementSpice(const std::string & file, std::string & input, std::string & output);
+		void AddElementSpice(const std::string & file, std::string & input, std::string & output)
 		{
 			AddElement(new ElectronicsElementSpice(file, input, output));
 		}
@@ -65,6 +65,8 @@ namespace Electronics
 		//clear instance, remove all elements
 		void Clear();
 		
+		void SetDebug(bool set = true);
+		
 	protected:
 		
 		void AddElement(ElectronicsElementBase * element);
@@ -77,6 +79,9 @@ namespace Electronics
 		
 		//instance used for returning references
 		TGraph m_DataGraph;
+		
+		//is debug mode enabled
+		bool m_Debug;
 	};
 }
 

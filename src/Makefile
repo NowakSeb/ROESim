@@ -5,6 +5,7 @@ LIBLIST = $(patsubst lib%.a,-l%, $(LIBARIES))
 LIBCLEAN = $(patsubst lib%.a,lib%.a.rm, $(LIBARIES))
 
 INCLUDEFLAGS = $(patsubst %,-I%/include, $(shell ls -d lib* 2>/dev/null))
+LIBPATH = $(patsubst %,-L%/../libs, $(shell ls -d lib* 2>/dev/null))
 
 PROGSO= $(subst .cpp,.o, $(shell ls -d prog/*.cpp 2>/dev/null))
 PROGSNAME= $(subst .cpp,.prog, $(shell ls -d prog/*.cpp 2>/dev/null))
@@ -12,7 +13,7 @@ PROGSNAME= $(subst .cpp,.prog, $(shell ls -d prog/*.cpp 2>/dev/null))
 CXX = g++ -fmessage-length=0 -std=c++0x
 CXXFLAGS= -g -Wall -MD -O2
 ROOTCFLAGS=$(shell root-config --cflags)
-LD_FLAGS = -lm -lpthread `root-config --libs --glibs` -lMinuit2 -lfftw3
+LD_FLAGS = -lm -lpthread `root-config --libs --glibs` -lMinuit2 -lfftw3 -lngspice
 
 
 # OBJ=

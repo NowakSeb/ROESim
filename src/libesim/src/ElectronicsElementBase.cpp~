@@ -9,20 +9,13 @@ using namespace std;
 ElectronicsElementBase::ElectronicsElementBase()
 {
 	m_ConstSampling = true;
+	m_Debug = false;
 }
 
 ElectronicsElementBase::~ElectronicsElementBase()
 {
 	
 }
-
-// void ElectronicsElementBase::Process(Electronics::ElectronicsElementData & data)
-// {
-// 	//check for space and sampling -> todo
-// 	
-// 	ProcessElement(data);
-// }
-
 
 string ElectronicsElementBase::ReadLine(ifstream & file)
 {
@@ -74,4 +67,9 @@ bool ElectronicsElementBase::CapableOfSpace(Electronics::Space space)
 		}
 	}
 	return false;
+}
+
+void ElectronicsElementBase::SetDebug(bool set)
+{
+	m_Debug = set;
 }

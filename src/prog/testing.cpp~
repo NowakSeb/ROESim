@@ -216,6 +216,7 @@ bool CompareGraphs(const TGraph & graph1, const TGraph & graph2, double difx, do
 		cout << mes << ": Y-Axis differ up to " << dify << "." << endl;
 		return false;
 	}
+	return true;
 }
 
 bool CheckFFTMax(const TGraph & real, const TGraph & im, double res, double dif, const char * mes)

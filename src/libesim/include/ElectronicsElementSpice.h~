@@ -23,9 +23,17 @@ namespace Electronics
 
 		virtual void ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling);
 		
+		virtual void SetDebug(bool set);
+		
 	private:
 		//init all members
-		void Init(std::string & file, std::string & input, std::string & output);
+		void Init(const std::string & file, std::string & input, std::string & output);
+	
+		//load spice circuit into ngspice
+		void LoadCircuit(const std::string & file);
+
+		//load data into ngspice
+		void LoadSignal();
 		
 	};
 }

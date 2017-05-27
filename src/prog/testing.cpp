@@ -170,6 +170,7 @@ void TestDeltaResponseSpice(TFile & file, string & path)
 	string pOut = "out";
 	
 	ElectronicsPart pPart;
+	pPart.SetDebug();
 	pPart.AddElementSpice(path + "spice_rc.txt", pIn, pOut);
 	TGraph pDRes = pPart.GetDeltaResponse(1e-6, 1e-9);
 	pDRes.Write("dres");

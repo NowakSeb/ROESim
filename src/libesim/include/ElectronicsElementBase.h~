@@ -43,13 +43,18 @@ namespace Electronics
 			return m_SpaceCapability[0];
 		}
 
+		virtual void SetDebug(bool set)
+		{
+			
+			m_Debug = set;
+		}
 //		void AddInputNoise();
 
 //		void AddOutputNoise();
 		
 	protected:
 		
-		void SetName(const string & name)
+		void SetName(const std::string & name)
 		{
 			size_t pPos = name.rfind("/");
 			m_Name = name.substr(pPos+1, name.size());
@@ -65,7 +70,8 @@ namespace Electronics
 		bool m_ConstSampling;
 		//list of spaces this element accepts
 		std::vector<Electronics::Space> m_SpaceCapability;
-		
+		//print debug information to std::out
+		bool m_Debug;
 	};
 }
 

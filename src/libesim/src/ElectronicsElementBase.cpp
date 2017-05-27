@@ -9,6 +9,7 @@ using namespace std;
 ElectronicsElementBase::ElectronicsElementBase()
 {
 	m_ConstSampling = true;
+	m_Debug = false;
 }
 
 ElectronicsElementBase::~ElectronicsElementBase()
@@ -66,4 +67,9 @@ bool ElectronicsElementBase::CapableOfSpace(Electronics::Space space)
 		}
 	}
 	return false;
+}
+
+void ElectronicsElementBase::SetDebug(bool set)
+{
+	m_Debug = set;
 }

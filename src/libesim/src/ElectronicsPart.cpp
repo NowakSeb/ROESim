@@ -15,7 +15,7 @@ using namespace std;
 
 ElectronicsPart::ElectronicsPart(Precision precision) : m_Precision(precision)
 {
-	
+	m_Debug = false;
 }
 
 ElectronicsPart::~ElectronicsPart()
@@ -44,6 +44,7 @@ void ElectronicsPart::Process(TGraph & input, double ticks, bool sort)
 
 void ElectronicsPart::AddElement(Electronics::ElectronicsElementBase * element)
 {
+	element->SetDebug(m_Debug);
 	m_Elements.push_back(element);
 }
 
@@ -76,3 +77,13 @@ TGraph & ElectronicsPart::GetDeltaResponse(double length, double spacing)
 	Process(pInput);
 	return m_DataGraph;
 }
+
+void ElectronicsPart::SetDebug(bool set)
+{
+	list<Electronics::ElectronicsElementBase *>::iterator pIt;
+	for(pIt = m_Elements.begin(); pIt != m_Elements.end(); pIt++) {
+		(*pIt)->SetDebug(set);
+	}
+	m_Debug = set;
+}
+

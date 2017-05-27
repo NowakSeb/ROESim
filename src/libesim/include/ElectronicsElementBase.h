@@ -43,6 +43,7 @@ namespace Electronics
 			return m_SpaceCapability[0];
 		}
 
+		virtual void SetDebug(bool set);
 //		void AddInputNoise();
 
 //		void AddOutputNoise();
@@ -65,7 +66,8 @@ namespace Electronics
 		bool m_ConstSampling;
 		//list of spaces this element accepts
 		std::vector<Electronics::Space> m_SpaceCapability;
-		
+		//print debug information to std::out
+		bool m_Debug;
 	};
 }
 
