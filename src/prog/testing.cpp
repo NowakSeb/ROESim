@@ -166,13 +166,13 @@ void TestDeltaResponseSpice(TFile & file, string & path)
 	file.mkdir("DRSpice");
 	file.cd("DRSpice");
 	
-	string pIn = "in";
-	string pOut = "out";
+	string pIn = "N000";
+	string pOut = "N001";
 	
 	ElectronicsPart pPart;
 	pPart.SetDebug();
 	pPart.AddElementSpice(path + "spice_rc.txt", pIn, pOut);
-	TGraph pDRes = pPart.GetDeltaResponse(1e-6, 1e-9);
+	TGraph pDRes = pPart.GetDeltaResponse(1e-6, 1e-7);
 	pDRes.Write("dres");
 	
 	cout << "Done" << endl;

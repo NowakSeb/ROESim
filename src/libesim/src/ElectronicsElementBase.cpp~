@@ -54,6 +54,9 @@ string ElectronicsElementBase::NextLine(ifstream & file, char comment)
 		{
 			continue;
 		}
+		else if (pLine.size() < 2) {
+			continue;
+		}
 		return pLine;
 	}
 	return "";

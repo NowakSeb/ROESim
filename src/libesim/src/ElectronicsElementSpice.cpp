@@ -55,19 +55,54 @@ void ElectronicsElementSpice::StoreTransferData(TFile & file)
 
 void ElectronicsElementSpice::ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling)
 {
+	stringstream pSimStream;
+	LoadSignal(size, spacere, datare, scaling);
+	double pIntervall = (spacere[size-1] - spacere[0])/size * scaling;
 
+	ngSpice_Command("bg_run");
+	ngSpice_Command("bg_halt");
+	//ngSpice_Command("edit");
 	
+//	ngSpice_Command("circbyline .control");
+	pSimStream << "tran " << pIntervall << " " << spacere[size - 1];
+	ngSpice_Command(const_cast< char *>(pSimStream.str().c_str()));
+
+	gYAxis = m_OutputNet;
+	gBufferGraph = new TGraph();
+// 	ngSpice_Command("circbyline run");
+// 	ngSpice_Command("circbyline .endc");
+	ngSpice_Command("bg_resume");
+	
+	//wait until finished
+	for (;;)
+	{
+		usleep (10000);
+		if (gSpiceRunning)
+			break;
+	}
+	gBufferGraph->Write("spice");
 }
 
 void ElectronicsElementSpice::Init(const string & file, string & input, string & output)
 {
 	SetName(file);
-	m_ConstSampling = false; //spice takes everything
+	//spice takes also non const sampling everything
+	m_ConstSampling = false;
 	//accepts only time space data
 	m_SpaceCapability.push_back(Space::TIME);
-	
+
+	m_InputNet = input;
+	m_OutputNet = output;
 	//init ngspice callback fcts
 	int ret = ngSpice_Init(ng_getchar, ng_getchar, ng_exit, ng_data, ng_initdata, ng_thread_runs, NULL);
+	
+	stringstream pStream;
+	pStream << "v" << hex << this;
+	m_InputSourceName = pStream.str();
+	//m_InputSourceName = "vin";
+	m_SpiceCommandForbidden.clear();
+	m_SpiceCommandForbidden.push_back(".trans");
+	m_SpiceCommandForbidden.push_back(".ac");
 }
 
 void ElectronicsElementSpice::SetDebug(bool set)
@@ -79,39 +114,109 @@ void ElectronicsElementSpice::SetDebug(bool set)
 
 void ElectronicsElementSpice::LoadCircuit(const string & file)
 {
-	string pCommand = "source " + file;
- 	ngSpice_Command(const_cast<char*>(pCommand.c_str()));
-	ngSpice_Command("circbyline V2 N006 0 PWL(0 1 1 2 1 3");
-	ngSpice_Command("circbyline .end");
+	ifstream pFile;
+
+	pFile.open(file);
+	
+	if (!pFile.good()) {
+		stringstream pStream;
+		pStream << "Spice file " << file << " cannot be opened. Does this file exists?";
+		throw pStream.str();
+	}
+
+	//define input stream
+//	ngSpice_Command("let inpvec=vector(10)");
+	
+	//just to be sure...
+	ngSpice_Command("circbyline .TITLE * ROESIM");
+	
+	while(pFile.good()) {
+		string pSpiceCommand = NextLine(pFile);
+		for(list<string>::iterator pIt = m_SpiceCommandForbidden.begin(); pIt != m_SpiceCommandForbidden.end(); pIt++) {
+			if (pSpiceCommand.find(*pIt) != pSpiceCommand.npos) {
+				string pEx = "Spice file " + file + " contains command " + *pIt + " which is not allowed in this application.";
+				throw pEx;
+			}
+		}
+		if (pSpiceCommand.find(".end") != string::npos || pSpiceCommand == "") {
+			//now add sources
+			string pSourceString;
+			pSourceString = "circbyline " + m_InputSourceName + " " + m_InputNet + " 0 pwl (0 0 1 0)";
+// 			pSourceString = "circbyline VIN 0 N000 PWL(0 1 1 2)";
+			ngSpice_Command(const_cast<char*>(pSourceString.c_str()));
+			ngSpice_Command("circbyline .option noinit acct");
+			//ngSpice_Command("circbyline .tran 1e-8 1e-5");
+			ngSpice_Command("circbyline .end");
+			break;
+		}
+		else {
+			pSpiceCommand = "circbyline " + pSpiceCommand;
+			ngSpice_Command(const_cast<char*>(pSpiceCommand.c_str()));
+		}
+	}
+	
 }
 
-void ElectronicsElementSpice::LoadSignal(unsigned int size, double * spacere, double * datare)
+void ElectronicsElementSpice::LoadSignal(unsigned int size, double * spacere, double * datare, double scaling)
 {
-// 	for(unsigned int i = 0; i < input.size(); i++)
+	stringstream pInputStream;
+	pInputStream << "let inpvec=vector(" << 2*size << ")";
+	ngSpice_Command(const_cast<char *>(pInputStream.str().c_str()));
+	
+	for(unsigned int i = 0; i < size; i++)
+	{
+		stringstream pInputStream1, pInputStream2;
+		pInputStream1 << "set inpvec[" << 2*i << "]=" << spacere[i]*scaling;
+		ngSpice_Command(const_cast<char *>(pInputStream1.str().c_str()));
+		pInputStream2 << "set inpvec[" << 2*i+1 << "]=" << datare[i];
+		ngSpice_Command(const_cast<char *>(pInputStream2.str().c_str()));
+	}
+	string pCommand = "alter @" + m_InputSourceName + "[pwl]=inpvec";
+// 	cout << pCommand << endl;
+	ngSpice_Command(const_cast<char *>(pCommand.c_str()));
+	
+	
+// 	ngSpice_Command("set");
+	//ngSpice_Command("alter vin pwl = [ 0 1 2 3 ]");
+	//ngSpice_Command("setcirc");
+	//ngSpice_Command("circbyline .control");
+// 	ngSpice_Command("alter @vin[pwl]=inpvec");
+	//ngSpice_Command("circbyline .endc");
+// 	pCommand = "show inpvec";// + m_InputSourceName;
+// 	ngSpice_Command(const_cast<char *>(pCommand.c_str()));
+	
+	// 	ngSpice_Command(const_cast<char *>(pInputStream.str().c_str()));
+	
+	//ngSpice_Command("display");
+// 
+// 	for(unsigned int i = 0; i < size; i++)
 // 	{
 // 		stringstream pInputStream;
 // 		if (i==0)
 // 		{
-// 			pInputStream << "circbyline V2 N006 0 PWL(";
+// 			pInputStream << "alter " << m_InputSourceName << " pwl = [ ";
 // 		}
 // 		else
 // 		{
-// 			pInputStream << "circbyline +    ";
+// 			pInputStream << "";
 // 		}
-// 		pInputStream << input[i];
-// 		if (i == input.size() - 1)
+// 		pInputStream << spacere[i] << " " << datare[i];
+// 		if (i == size - 1)
 // 		{
-// 			pInputStream << ")";
+// 			pInputStream << " ]";
 // 		}
-// 		ret = ngSpice_Command(const_cast<char *>(pInputStream.str().c_str()));
+// 		ngSpice_Command(const_cast<char *>(pInputStream.str().c_str()));
 // 	}
+// 	stringstream pInputStream;
+// 	ngSpice_Command("alter @v1[pwl] = [ 0 1 2 3 ]");
+// 	ngSpice_Command("alter R1 = 10");
 }
 
 //ng spice callback routines
 int ng_getchar(char * outputreturn, int ident, void* userdata)
 {
 	if (gVerbose) {
-		cout << outputreturn << endl;
+		cout << "SPICE:\t" << outputreturn << endl;
 	}
 	return 0;
 }
@@ -126,13 +231,15 @@ int ng_thread_runs(bool noruns, int ident, void* userdata)
 // Callback function called from bg thread in ngspice once per accepted data point
 int ng_data(pvecvaluesall vdata, int numvecs, int ident, void* userdata)
 {
+// 	cout << "ng_data" << endl;
+	
 	// 	if (gSpiceOutputEnable)
 	// 	{
 		double pTime = vdata->vecsa[gVecTime]->creal;
 		double pVal = vdata->vecsa[gVecOutput]->creal;
 		double pRef = vdata->vecsa[gVecOutputRef]->creal;
 		unsigned int pPoint = gBufferGraph->GetN();
-		// 		cout << pTime << " " << pVal << endl;
+// 		cout << pTime << " " << pVal << endl;
 		if (gYAxisRef != "")
 		{
 			gBufferGraph->SetPoint(pPoint, pTime + gSpiceMinTime, pVal-pRef);
@@ -149,10 +256,10 @@ int ng_data(pvecvaluesall vdata, int numvecs, int ident, void* userdata)
 int ng_initdata(pvecinfoall intdata, int ident, void* userdata)
 {
 	// Callback function called from bg thread in ngspice once upon intialization of the simulation vectors)
-	
+// 	cout << "ng_init" << endl;
 	int pCount = intdata->veccount;
 	for (int i = 0; i < pCount; i++) {
-		//  		printf("Vector: %s\n", intdata->vecs[i]->vecname);
+// 		 		printf("Vector: %s\n", intdata->vecs[i]->vecname);
 		if (cieq(intdata->vecs[i]->vecname, const_cast<char *>(gYAxis.c_str())))
 		{
 			gVecOutput = i;
