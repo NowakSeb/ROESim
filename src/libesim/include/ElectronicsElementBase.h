@@ -26,7 +26,7 @@ namespace Electronics
 		virtual void StoreTransferData(TFile & file) = 0;
 		
 		//routine for data modification
-		virtual void ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling) = 0;
+		virtual void ModifyData(Space space, unsigned int & size, double * & spacere, double * & spaceim, double * & datare, double * & dataim, double scaling) = 0;
 		
 		//does this instance needs constant sampling
 		bool NeedsConstSampling()
@@ -43,6 +43,19 @@ namespace Electronics
 			return m_SpaceCapability[0];
 		}
 
+		bool BinaryOutput()
+		{
+return false;
+			//return m_BinaryOutput;
+		}
+		
+
+		void GetEdges()
+		{
+		//	return m_BinaryOutput;
+		}
+		
+		
 		virtual void SetDebug(bool set);
 //		void AddInputNoise();
 
@@ -64,6 +77,8 @@ namespace Electronics
 		std::string m_Name;
 		//does this element needs constantant sampling; true if yes
 		bool m_ConstSampling;
+		//does element provide binary Output
+		bool m_BinaryOutput;
 		//list of spaces this element accepts
 		std::vector<Electronics::Space> m_SpaceCapability;
 		//print debug information to std::out

@@ -25,16 +25,14 @@ ElectronicsPart::~ElectronicsPart()
 
 void ElectronicsPart::Process(TGraph & input, double ticks, bool sort)
 {
-	list<Electronics::ElectronicsElementBase *>::iterator pIt;
 	ElectronicsElementData pData(input, ticks, m_Precision, sort);
 	
 	pData.SetLog(true);
 
 // 	apply elements
-	for(pIt = m_Elements.begin(); pIt != m_Elements.end(); pIt++) {
+	for(auto pIt = m_Elements.begin(); pIt != m_Elements.end(); pIt++) {
 		pData.ApplyElement(**pIt);
 	}
-	
 	//and get final output
 	pData.SetSpace(Space::FOURIER);
 	pData.SetSpace(Space::TIME);

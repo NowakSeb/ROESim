@@ -1,7 +1,9 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <iostream>
 #include "ElectronicsElementBase.h"
+
 
 using namespace Electronics;
 using namespace std;
@@ -10,11 +12,12 @@ ElectronicsElementBase::ElectronicsElementBase()
 {
 	m_ConstSampling = true;
 	m_Debug = false;
+	m_BinaryOutput = false;
 }
 
 ElectronicsElementBase::~ElectronicsElementBase()
 {
-	
+
 }
 
 string ElectronicsElementBase::ReadLine(ifstream & file)

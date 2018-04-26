@@ -24,7 +24,8 @@ namespace Electronics
 		
 		virtual void StoreTransferData(TFile & file);
 
-		virtual void ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling);
+// 		virtual void ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling);
+		virtual void ModifyData(Space space, unsigned int & size, double * & spacere, double * & spaceim, double * & datare, double * & dataim, double scaling);
 		
 		void SetCutOffFreqency(double freq)
 		{

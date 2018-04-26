@@ -56,7 +56,7 @@ void GetColumnData(const string & input, double & freq, double & first, double &
 	stringstream pStream;
 	double pBuf;
 	
-	if (input == 0) {
+	if (input == "") {
 		freq = 0;
 		return;
 	}
@@ -202,7 +202,8 @@ void ElectronicsElementSPar::Read(const std::string & file, unsigned int channel
 	}
 }
 
-void ElectronicsElementSPar::ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling)
+// void ElectronicsElementSPar::ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling)
+void ElectronicsElementSPar::ModifyData(Space space, unsigned int & size, double * & spacere, double * & spaceim, double * & datare, double * & dataim, double scaling)
 {
 	if (space != Space::FOURIER) {
 		throw string("Data needs to be in Fourier space in order to apply s-parameters.");

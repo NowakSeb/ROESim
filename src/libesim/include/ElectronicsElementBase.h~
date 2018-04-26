@@ -26,7 +26,7 @@ namespace Electronics
 		virtual void StoreTransferData(TFile & file) = 0;
 		
 		//routine for data modification
-		virtual void ModifyData(Space space, unsigned int size, double * spacere, double * spaceim, double * datare, double * dataim, double scaling) = 0;
+		virtual void ModifyData(Space space, unsigned int & size, double * & spacere, double * & spaceim, double & * datare, double & * dataim, double scaling) = 0;
 		
 		//does this instance needs constant sampling
 		bool NeedsConstSampling()
@@ -43,11 +43,7 @@ namespace Electronics
 			return m_SpaceCapability[0];
 		}
 
-		virtual void SetDebug(bool set)
-		{
-			
-			m_Debug = set;
-		}
+		virtual void SetDebug(bool set);
 //		void AddInputNoise();
 
 //		void AddOutputNoise();

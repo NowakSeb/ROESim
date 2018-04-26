@@ -167,7 +167,7 @@ void TestDeltaResponseSpice(TFile & file, string & path)
 	file.cd("DRSpice");
 	
 	string pIn = "N000";
-	string pOut = "out";
+	string pOut = "N001";
 	
 	ElectronicsPart pPart;
 	pPart.SetDebug();

@@ -11,6 +11,7 @@ void TestDataSupport(TFile & file, string & path);
 void TestFFT0(TFile & file, string & path);
 void TestDeltaResponseSPar(TFile & file, string & path);
 void TestDeltaResponseSpice(TFile & file, string & path);
+void TestShaping(TFile & file, string & path);
 
 bool CompareGraphs(const TGraph & graph1, const TGraph & graph2, double difx, double dify, const char * mes);
 bool CheckFFTMax(const TGraph & real, const TGraph & im, double res, double dif, const char * mes);
@@ -33,6 +34,7 @@ int main()
 		TestFFT0(pFile, pPath);
 		TestDeltaResponseSPar(pFile, pPath);
 		TestDeltaResponseSpice(pFile, pPath);
+		TestShaping(pFile, pPath);
 	}
 	catch (std::string ex) {
 		cout << ":Err " << ex << endl;
@@ -170,10 +172,34 @@ void TestDeltaResponseSpice(TFile & file, string & path)
 	string pOut = "N001";
 	
 	ElectronicsPart pPart;
-	pPart.SetDebug();
+	//pPart.SetDebug();
 	pPart.AddElementSpice(path + "spice_rc.txt", pIn, pOut);
 	TGraph pDRes = pPart.GetDeltaResponse(1e-6, 1e-7);
-	pDRes.Write("dres");
+	pDRes.Write("dres0");
+	pDRes = pPart.GetDeltaResponse(1e-7, 1e-8);
+	pDRes.Write("dres1");
+	
+	cout << "Done" << endl;
+}
+
+void TestShaping(TFile & file, string & path)
+{
+	cout << "Delta response shaping test... " << endl;
+	
+	file.cd();
+	file.mkdir("Shaping");
+	file.cd("Shaping");
+	
+	string pIn = "N000";
+	string pOut = "N001";
+	
+	ElectronicsPart pPart;
+// 	pPart.SetDebug();
+	pPart.AddElementSParameter(path + "ASD.s2p",1, 0);
+	pPart.AddElementSpice(path + "spice_res.txt", pIn, pOut);
+	//	pPart.AddElementSpice(path + "spice_rc.txt", pIn, pOut);
+	TGraph pDRes = pPart.GetDeltaResponse(1e-6, 1e-9);
+	pDRes.Write("res");
 	
 	cout << "Done" << endl;
 }

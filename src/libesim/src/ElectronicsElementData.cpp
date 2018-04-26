@@ -16,9 +16,6 @@ inline double GetDelta(unsigned int size, double * data, bool min = true)
 	double pRes = TMath::Abs(data[1] - data[0]);
 	for(unsigned int i = 1; i < size-1; i++) {
 		double pDelta = TMath::Abs(data[i+1] - data[i]);
-		if (pDelta != pRes) {
-// 			cout << i << "res: " << pDelta << pRes << endl;
-		}
 		if (pDelta < pRes && min) {
 			pRes = pDelta;
 		}
@@ -226,7 +223,7 @@ void ElectronicsElementData::SetDataTimeSpace(const TGraph & graph, double ticks
 	m_Scaling = ticks;
 	m_CurrentSpace = Space::TIME;
 	//delete old data
-	DeleteData();
+ 	DeleteData();
 	//fill new data
 	m_SpaceRe = new double[graph.GetN()];
 	m_DataRe = new double[graph.GetN()];
@@ -328,6 +325,8 @@ void ElectronicsElementData::UpdateSampling(bool updatedata)
 		//loop over data
 		double pMinTimeDiff = GetDelta(m_DataSize, m_SpaceRe, true);
 		double pMaxTimeDiff = GetDelta(m_DataSize, m_SpaceRe, false);
+		
+		cout << pMinTimeDiff << " " << pMaxTimeDiff << endl;
 		
 		if (pMaxTimeDiff == pMinTimeDiff) {
 			m_ConstSampled = true;
@@ -443,7 +442,7 @@ void ElectronicsElementData::BackwardFFT()
 void ElectronicsElementData::ChangeSamplingTimeSpace(double sampling, TGraph * input)
 {
 	TGraph * pGraph;
-
+	
 	if (sampling < 0) {
 		//does not make any sense
 		m_SamplingCurrent = m_SamplingDefault;
@@ -467,8 +466,17 @@ void ElectronicsElementData::ChangeSamplingTimeSpace(double sampling, TGraph * i
 		pGraph->GetPoint(pGraph->GetN() - 1, pMax, y);
 	}
 	unsigned int pLength = pMax / m_SamplingCurrent + 1;
-	double * pX = new double[pLength];
-	double * pY = new double[pLength];
+
+	double * pX;
+	double * pY;
+	
+	try {
+		pX = new double[pLength];
+		pY = new double[pLength];
+	}
+	catch(...) {
+		throw string("Array is too long. Check minimal distance between data input points.");
+	}
 	
 	for(unsigned int i = 0; i < pLength; i++) {
 		pX[i] = i*sampling;

@@ -10,7 +10,7 @@ LIBPATH = $(patsubst %,-L%/../libs, $(shell ls -d lib* 2>/dev/null))
 PROGSO= $(subst .cpp,.o, $(shell ls -d prog/*.cpp 2>/dev/null))
 PROGSNAME= $(subst .cpp,.prog, $(shell ls -d prog/*.cpp 2>/dev/null))
 
-CXX = g++ -fmessage-length=0 -std=c++0x
+CXX = g++ -fmessage-length=0 -std=c++14
 CXXFLAGS= -g -Wall -MD -O2
 ROOTCFLAGS=$(shell root-config --cflags)
 LD_FLAGS = -lm -lpthread `root-config --libs --glibs` -lMinuit2 -lfftw3 -lngspice
