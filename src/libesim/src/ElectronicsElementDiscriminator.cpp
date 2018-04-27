@@ -6,13 +6,14 @@
 #include <fstream>
 
 #include <TMath.h>
+#include <TGraph.h>
 
 #include "ElectronicsElementDiscriminator.h"
 
 using namespace Electronics;
 using namespace std;
 
-ElectronicsElementDiscriminator::ElectronicsElementDiscriminator(double threshold, double low, double high, double hysteresis)
+ElectronicsElementDiscriminator::ElectronicsElementDiscriminator(double threshold, double low, double high, double hysteresis, double deadtime, double risetime)
 {
 	m_SpaceCapability.push_back(Space::TIME);
 	m_BinaryOutput = true;
@@ -21,6 +22,8 @@ ElectronicsElementDiscriminator::ElectronicsElementDiscriminator(double threshol
 	m_LevelLow = low;
 	m_LevelHigh = high;
 	m_Hysteresis = hysteresis;
+	m_DeadTime = deadtime;
+	m_RiseTime = risetime;
 }
 
 ElectronicsElementDiscriminator::~ElectronicsElementDiscriminator()
@@ -29,12 +32,6 @@ ElectronicsElementDiscriminator::~ElectronicsElementDiscriminator()
 
 void ElectronicsElementDiscriminator::StoreTransferData(TFile & file)
 {
-// 	file.cd();
-// 	file.mkdir(m_Name.c_str());
-// 	file.cd(m_Name.c_str());
-// 	m_sParaReal.Write("real");
-// 	m_sParaIm.Write("im");
-// 	file.cd();
 }
 
 void ElectronicsElementDiscriminator::ModifyData(Space space, unsigned int & size, double * & spacere, double * & spaceim, double * & datare, double * & dataim, double scaling)
@@ -42,19 +39,41 @@ void ElectronicsElementDiscriminator::ModifyData(Space space, unsigned int & siz
 	if (space != Space::TIME) {
 		throw string("Data needs to be in time space in order to discriminate.");
 	}
-// 	for(unsigned int i = 0; i < size; i++) {
-// 		double pFreq = scaling * spacere[i];
-// 		if (pFreq > m_CutOffFreq && m_CutOffFreq > 0) {
-// 			//higher frequencies are ignored
-// 			break;
-// 		}
-// 		double pScatRe = m_sParaReal.Eval(pFreq);
-// 		double pScatIm = m_sParaIm.Eval(pFreq);
-// 		
-// 		double pReal = pScatRe * datare[i] - pScatIm * dataim[i];
-// 		double pIm = pScatRe * dataim[i] + pScatIm * datare[i];
-// 		datare[i] = pReal;
-// 		dataim[i] = pIm;
-// 	}
-// 	
+	TGraph pGraph;
+
+	//no hysteresis implemented so far
+	double pLastLeading = spacere[0] - m_DeadTime / scaling;
+	bool pActive = false;
+	for(unsigned int i = 0; i < size; i++) {
+		double pLeadDiff = spacere[i] - pLastLeading;
+		bool pTriggered = false;
+		//is signal high enough to trigger
+		if (datare[i] > m_Threshold && m_Threshold > 0) {
+			//positive signs
+			pTriggered = true;
+		}
+		else if (datare[i] < m_Threshold && m_Threshold < 0) {
+			//negative signs
+			pTriggered = true;
+		}
+		
+		//include deadtime
+		if (pTriggered && !pActive && pLeadDiff * scaling >= m_DeadTime) {
+			pGraph.SetPoint(pGraph.GetN(), spacere[i], m_LevelLow);
+			pGraph.SetPoint(pGraph.GetN(), spacere[i] + m_RiseTime, m_LevelHigh);
+			pLastLeading = spacere[i];
+			pActive = true;
+		}
+		else if (!pTriggered && pActive){
+			pGraph.SetPoint(pGraph.GetN(), spacere[i], m_LevelHigh);
+			pGraph.SetPoint(pGraph.GetN(), spacere[i] + m_RiseTime, m_LevelLow);
+			pActive = false;
+		}
+		
+	}
+	if (!m_BinaryOnly) {
+		//update datare, etc..
+	}
+	
+	pGraph.Write();
 }

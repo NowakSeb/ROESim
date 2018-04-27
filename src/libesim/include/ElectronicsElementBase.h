@@ -43,19 +43,22 @@ namespace Electronics
 			return m_SpaceCapability[0];
 		}
 
+		//returns if device provides binary output
 		bool BinaryOutput()
 		{
-return false;
-			//return m_BinaryOutput;
+			return m_BinaryOutput;
 		}
 		
-
-		void GetEdges()
+		//returns if device provides binary output
+		void BinaryOnly(bool set)
 		{
-		//	return m_BinaryOutput;
+			m_BinaryOnly = set;
 		}
 		
 		
+		//return vector with leading and trailing edges, if m_BinaryOutput is enabled
+		void GetEdges(std::vector<double> & leading, std::vector<double> & trailing);
+
 		virtual void SetDebug(bool set);
 //		void AddInputNoise();
 
@@ -83,6 +86,13 @@ return false;
 		std::vector<Electronics::Space> m_SpaceCapability;
 		//print debug information to std::out
 		bool m_Debug;
+		//time of leading edge (if binary output enabled)
+		std::vector<double> m_EdgeLeading;
+		//time of leading edge (if binary output enabled)
+		std::vector<double> m_EdgeTrailing;
+		//only binary output enabled (speed up), only useful if binary output is possible
+		bool m_BinaryOnly;
+		
 	};
 }
 

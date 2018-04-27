@@ -14,7 +14,7 @@ namespace Electronics
 	public:
 		
 		// Constructor
-		ElectronicsElementDiscriminator(double threshold, double low, double high, double hysteresis);
+		ElectronicsElementDiscriminator(double threshold, double low, double high, double hysteresis, double deadtime = 0, double risetime = 0);
 		
 		// Destructor
 		virtual ~ElectronicsElementDiscriminator();
@@ -22,8 +22,6 @@ namespace Electronics
 		virtual void StoreTransferData(TFile & file);
 
 		virtual void ModifyData(Space space, unsigned int & size, double * & spacere, double * & spaceim, double * & datare, double * & dataim, double scaling);
-		
-		virtual void SetDebug(bool set);
 		
 	private:
 		
@@ -38,6 +36,12 @@ namespace Electronics
 		
 		//hysteresis setting
 		double m_Hysteresis;
+		
+		//deadtime setting
+		double m_DeadTime;
+		
+		//risetime setting
+		double m_RiseTime;
 	};
 }
 

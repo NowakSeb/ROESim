@@ -326,8 +326,6 @@ void ElectronicsElementData::UpdateSampling(bool updatedata)
 		double pMinTimeDiff = GetDelta(m_DataSize, m_SpaceRe, true);
 		double pMaxTimeDiff = GetDelta(m_DataSize, m_SpaceRe, false);
 		
-		cout << pMinTimeDiff << " " << pMaxTimeDiff << endl;
-		
 		if (pMaxTimeDiff == pMinTimeDiff) {
 			m_ConstSampled = true;
 			m_SamplingDefault = TMath::Abs(pMaxTimeDiff);

@@ -123,6 +123,7 @@ namespace MDTPulse
 						
 						auto pGraph = new TGraph(pFullName.c_str());
 						pulselist.push_back(pGraph);
+						break;
 					}
 				}
 			}

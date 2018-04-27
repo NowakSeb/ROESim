@@ -13,6 +13,7 @@ ElectronicsElementBase::ElectronicsElementBase()
 	m_ConstSampling = true;
 	m_Debug = false;
 	m_BinaryOutput = false;
+	m_BinaryOnly = false;
 }
 
 ElectronicsElementBase::~ElectronicsElementBase()
@@ -78,4 +79,14 @@ bool ElectronicsElementBase::CapableOfSpace(Electronics::Space space)
 void ElectronicsElementBase::SetDebug(bool set)
 {
 	m_Debug = set;
+}
+
+void ElectronicsElementBase::GetEdges(std::vector<double> & leading, std::vector<double> & trailing)
+{
+	leading.clear();
+	trailing.clear();
+	for(unsigned int i = 0; i < m_EdgeLeading.size(); i++) {
+		leading.push_back(m_EdgeLeading[i]);
+		trailing.push_back(m_EdgeTrailing[i]);
+	}
 }

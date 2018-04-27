@@ -8,6 +8,7 @@
 #include "ElectronicsElementData.h"
 #include "ElectronicsElementSPar.h"
 #include "ElectronicsElementSpice.h"
+#include "ElectronicsElementDiscriminator.h"
 
 namespace Electronics
 {
@@ -40,6 +41,19 @@ namespace Electronics
 		void AddElementSpice(const std::string & file, std::string & input, std::string & output)
 		{
 			AddElement(new ElectronicsElementSpice(file, input, output));
+		}
+
+		/**
+		 * add discriminator
+		 * @param threshold threshold voltage
+		 * @param low output level low
+		 * @param high output level high
+		 * @param hysteresis hysteresis setting
+		 * @param deadtime minimum difference between two trailing edges
+		 */
+		void AddElementDiscriminator(double threshold, double low = 0, double high = 1, double hysteresis = 0, double deadtime = 0, double risetime = 0)
+		{
+			AddElement(new ElectronicsElementDiscriminator(threshold, low, high, hysteresis, deadtime, risetime));
 		}
 		
 		/**
