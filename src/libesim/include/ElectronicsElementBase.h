@@ -49,7 +49,7 @@ namespace Electronics
 			return m_BinaryOutput;
 		}
 		
-		//returns if device provides binary output
+		//returns if device provides binary output only (just apllicable for BinaryOutput elements)
 		void BinaryOnly(bool set)
 		{
 			m_BinaryOnly = set;

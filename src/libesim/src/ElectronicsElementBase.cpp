@@ -85,8 +85,11 @@ void ElectronicsElementBase::GetEdges(std::vector<double> & leading, std::vector
 {
 	leading.clear();
 	trailing.clear();
-	for(unsigned int i = 0; i < m_EdgeLeading.size(); i++) {
+	for(unsigned int i = 0; i < m_EdgeTrailing.size(); i++) {
 		leading.push_back(m_EdgeLeading[i]);
 		trailing.push_back(m_EdgeTrailing[i]);
+	}
+	if (m_EdgeTrailing.size() < m_EdgeLeading.size()) {
+		leading.push_back(m_EdgeLeading[m_EdgeLeading.size()-1]);
 	}
 }

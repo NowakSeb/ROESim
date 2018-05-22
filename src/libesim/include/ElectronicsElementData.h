@@ -164,12 +164,6 @@ namespace Electronics
 		
 		//flag for logging
 		bool m_Logging;
-		
-// 		unsigned int m_DataFourierSize; //Fourier data size
-// 		double * m_DataFourierRe; //Fourier space real part
-// 		double * m_DataFourierIm; //Fourier space imaginary part
-// 		double m_FreqMin; //Fourier space minimum frequency
-// 		double m_FreqDelta; //Fourier space frequency delta
 	};
 }
 

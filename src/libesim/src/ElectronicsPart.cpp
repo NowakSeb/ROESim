@@ -85,3 +85,26 @@ void ElectronicsPart::SetDebug(bool set)
 	m_Debug = set;
 }
 
+bool ElectronicsPart::BinaryOutput()
+{
+	if (m_Elements.size() > 0) {
+		auto pLast = m_Elements.rbegin();
+		return (*pLast)->BinaryOutput();
+	}
+	else {
+		return false;
+	}
+}
+
+void ElectronicsPart::GetLatestEdges(std::vector<double> & leading, std::vector<double> & trailing)
+{
+	if (m_Elements.size() > 0) {
+		auto pLast = m_Elements.rbegin();
+		if ((*pLast)->BinaryOutput()) {
+			(*pLast)->GetEdges(leading, trailing);
+		}
+		else {
+			throw string("Last element does not provide binary output data.");
+		}	
+	}
+}

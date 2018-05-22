@@ -9,6 +9,7 @@
 #include <TRandom3.h>
 #include <TSystemDirectory.h>
 #include <TList.h>
+#include <TTree.h>
 #include "ElectronicsPart.h"
 
 namespace MDTPulse
@@ -22,12 +23,9 @@ namespace MDTPulse
 		// Destructor
 		virtual ~PulseData();
 		
-		//load pulse data
-		void LoadPulsesFromDir(std::string dir, std::string extension)
-		{
-			LoadFromDir<std::list<TGraph *>>(dir, extension, m_PulseList);
-		}
-
+		//load pulse data, all old pulses are deleted
+		void LoadPulsesFromDir(std::string dir, std::string extension, double radius);
+		
 		//load background data
 		void LoadBackgroundFromDir(std::string dir, std::string extension)
 		{
@@ -60,7 +58,24 @@ namespace MDTPulse
 		//store input and background data in root file
 		void WriteData();
 
+		//return graph with time as a function of the radius (rt-relation)
+		void StoreTimeRadiusGraph(std::string file);
+
+		//return graph with time as a function of the radius (rt-relation)
+		void SetRTRelation(std::string file);
+		
+		//return average resolution
+		double GetResolution(double width, unsigned int bins);
+		
 	private:
+		
+		struct TreeStruct {
+			unsigned int event;
+			double radius; // actual radius
+			double time; // drift time
+			double dradius; //converted radius
+		};
+		
 		//random number calc of the instance
 		TRandom3 m_Rand;
 		
@@ -82,18 +97,33 @@ namespace MDTPulse
 		//combinded pulses
 		std::list<TGraph *> m_CombindedList;
 
+		//tree with information necessary for resolution and efficiency calc
+		TTree * m_ResultTree;
+
+		//support struct for m_ResultTree
+		TreeStruct m_TreeStruct;
+		
+		//list with all applied radii
+		std::list<double> m_RadiiList;
+		
+		//TGraph with rt relation
+		TGraph * m_RT;
+		
 		//add second graph on top of first
 		static void AddGraph(TGraph * base, TGraph * add, double time);
 		
 		//add baseline in front of graph
 		void Extend(TGraph * graph, double time, double noise = 0);
 		
+		//rt conversion
+		double ConvertRT(double time);
+		
 		//scales the graphs in the given list
 		template< class container >
 		void ApplyScaling(double x, double y, container & pulselist)
 		{
 			for(auto pIt = pulselist.begin(); pIt != pulselist.end(); pIt++) {
-				unsigned int i;
+				int i;
 				for(i = 0; i < (*pIt)->GetN(); i++) {
 					double pX, pY;
 					(*pIt)->GetPoint(i, pX, pY);
@@ -123,7 +153,6 @@ namespace MDTPulse
 						
 						auto pGraph = new TGraph(pFullName.c_str());
 						pulselist.push_back(pGraph);
-						break;
 					}
 				}
 			}

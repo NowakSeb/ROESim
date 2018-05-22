@@ -81,6 +81,18 @@ namespace Electronics
 		
 		void SetDebug(bool set = true);
 		
+		/**
+		 * returns if binary output (see GetLatestEdges) is available
+		 */
+		bool BinaryOutput();
+		
+		/**
+		 * Get list of edges if last elemnt is binary based
+		 * @param leading leading edges
+		 * @param trailing trailing edges
+		 */
+		void GetLatestEdges(std::vector<double> & leading, std::vector<double> & trailing);
+		
 	protected:
 		
 		void AddElement(ElectronicsElementBase * element);

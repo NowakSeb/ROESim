@@ -39,8 +39,11 @@ void ElectronicsElementDiscriminator::ModifyData(Space space, unsigned int & siz
 	if (space != Space::TIME) {
 		throw string("Data needs to be in time space in order to discriminate.");
 	}
-	TGraph pGraph;
+// 	TGraph pGraph;
 
+	m_EdgeLeading.clear();
+	m_EdgeTrailing.clear();
+	
 	//no hysteresis implemented so far
 	double pLastLeading = spacere[0] - m_DeadTime / scaling;
 	bool pActive = false;
@@ -59,21 +62,28 @@ void ElectronicsElementDiscriminator::ModifyData(Space space, unsigned int & siz
 		
 		//include deadtime
 		if (pTriggered && !pActive && pLeadDiff * scaling >= m_DeadTime) {
-			pGraph.SetPoint(pGraph.GetN(), spacere[i], m_LevelLow);
-			pGraph.SetPoint(pGraph.GetN(), spacere[i] + m_RiseTime, m_LevelHigh);
+			if (!m_BinaryOnly) {
+				//pGraph.SetPoint(pGraph.GetN(), spacere[i], m_LevelLow);
+				//pGraph.SetPoint(pGraph.GetN(), spacere[i] + m_RiseTime, m_LevelHigh);
+				// to do...
+			}
 			pLastLeading = spacere[i];
+			m_EdgeLeading.push_back(spacere[i]);
 			pActive = true;
 		}
 		else if (!pTriggered && pActive){
-			pGraph.SetPoint(pGraph.GetN(), spacere[i], m_LevelHigh);
-			pGraph.SetPoint(pGraph.GetN(), spacere[i] + m_RiseTime, m_LevelLow);
+			if (!m_BinaryOnly) {
+// 				pGraph.SetPoint(pGraph.GetN(), spacere[i], m_LevelHigh);
+// 				pGraph.SetPoint(pGraph.GetN(), spacere[i] + m_RiseTime, m_LevelLow);
+				// to do...
+			}
 			pActive = false;
+			m_EdgeTrailing.push_back(spacere[i]);
 		}
-		
 	}
 	if (!m_BinaryOnly) {
 		//update datare, etc..
 	}
 	
-	pGraph.Write();
+	//pGraph.Write();
 }
