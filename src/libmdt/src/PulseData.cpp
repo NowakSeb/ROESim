@@ -9,7 +9,9 @@
 #include <TMath.h>
 #include <TAxis.h>
 #include <TH1F.h>
+#include <TF1.h>
 #include <TString.h>
+#include <TGraphErrors.h>
 
 #include "PulseData.h"
 
@@ -220,6 +222,7 @@ void PulseData::StoreTimeRadiusGraph(std::string file)
 
 double PulseData::GetResolution(double width, unsigned int bins)
 {
+	unsigned int pCounter = 0;
 	m_RadiiList.sort();
 	m_RadiiList.unique();
 
@@ -227,19 +230,39 @@ double PulseData::GetResolution(double width, unsigned int bins)
 	m_File->mkdir(dir);
 	m_File->cd(dir);
 	
-	auto * pHistoAll = new TH1F("histo_all", "histo", bins, -width, +width);
-	for(auto pIt = m_RadiiList.begin(); pIt != m_RadiiList.end(); pIt++) {
+	auto pResGraph = new TGraphErrors(m_RadiiList.size());
+	auto pResAll = new TGraphErrors(1);
+	auto pFitFunction = new TF1("resfit", "gaus",-width, +width);//fit function
+	auto pHistoAll = new TH1F("histo_all", "histo", bins, -width, +width); //histogram for all radii
+	for(auto pIt = m_RadiiList.begin(); pIt != m_RadiiList.end(); pIt++) { // loop over all radii
 		auto pCondition = TString::Format("radius < %f && radius > %f", *pIt + 0.01, *pIt - 0.01);
 		//all
 		auto pCommand = TString::Format("dradius-%f>>+histo_all", *pIt);
 		m_ResultTree->Draw(pCommand, pCondition);
 		//per radii
-		auto pName = TString::Format("histo_%f", *pIt);
-		auto * pHisto = new TH1F(pName, pName, bins, -width, +width);
-		pCommand = TString::Format("dradius-%f>>%s", *pIt, pName);
+		TString pName = TString::Format("histo_%f", *pIt);
+		auto pHisto = new TH1F(pName, pName, bins, -width, +width);
+		pCommand = TString::Format("dradius - %f >> %s", *pIt, pName.Data());
 		m_ResultTree->Draw(pCommand, pCondition);
+		pHisto->Fit("resfit", "Q");
+		pResGraph->SetPoint(pCounter, *pIt, pFitFunction->GetParameter(2));
+		pResGraph->SetPointError(pCounter, pFitFunction->GetParError(2));
+		
 		pHisto->Write();
-//		pHisto->Delete();
+		pHisto->Delete();
+
+		pCounter++;
 	}
+	pHistoAll->Fit("resfit", "Q");
+	pResAll->SetPoint(0, 0, pFitFunction->GetParameter(2));
+	pResAll->SetPointError(0, pFitFunction->GetParError(2));
+
 	pHistoAll->Write();
+	pResGraph->Write("res_detail");
+	pResAll->Write("res_all");
+	
+	pResGraph->Delete();
+	pResAll->Delete();
+	pHistoAll->Delete();
+	pFitFunction->Delete();
 }
