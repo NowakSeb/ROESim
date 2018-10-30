@@ -14,7 +14,7 @@ namespace Electronics
 	public:
 		
 		// Constructor
-		ElectronicsElementSpice(const std::string & file, std::string & input, std::string & output);
+		ElectronicsElementSpice(const std::string & file, const std::string & input, const std::string & output);
 		
 		// Destructor
 		virtual ~ElectronicsElementSpice();
@@ -29,7 +29,7 @@ namespace Electronics
 		
 	private:
 		//init all members
-		void Init(const std::string & file, std::string & input, std::string & output);
+		void Init(const std::string & file, const std::string & input, const std::string & output);
 	
 		//load spice circuit into ngspice
 		void LoadCircuit(const std::string & file);

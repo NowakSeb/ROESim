@@ -22,15 +22,15 @@ LD_FLAGS = -lm -lpthread `root-config --libs --glibs` -lMinuit2 -lfftw3 -lngspic
 
 all:
 	mkdir -p ../bin/$(ARCH)
-	make LIBS
-	make PROGS
+	make LIBS -j8
+	make PROGS -j8
 
 LIBS: $(LIBARIES)
 
 lib%.a: lib%
 	cd $</src;
 	$(eval SRCS=$(shell ls $</src/*.cpp))
-	make COMPLIB OBJ='$(subst .cpp,.o, $(SRCS))' LIB=$<
+	make COMPLIB OBJ='$(subst .cpp,.o, $(SRCS))' LIB=$< -j8
 
 COMPLIB: $(OBJ)
 	echo $(OBJ)

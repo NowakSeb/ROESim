@@ -153,7 +153,6 @@ namespace Electronics
 		double m_SamplingDefault;
 		//initial offset determined at loading the data, real coordinate
 		
-		
 		unsigned int m_DataSize; //Data size
 		double * m_DataRe; //Data coordinate real part
 		double * m_DataIm; //Data coordinate imaginary part

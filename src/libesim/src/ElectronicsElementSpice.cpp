@@ -36,7 +36,7 @@ string gYAxisRef;// = "P0";
 bool gVerbose = false;
 bool gInit = false;
 
-ElectronicsElementSpice::ElectronicsElementSpice(const std::string & file, string & input, string & output)
+ElectronicsElementSpice::ElectronicsElementSpice(const std::string & file, const string & input, const string & output)
 {
 	Init(file, input, output);
 	LoadCircuit(file);
@@ -133,7 +133,7 @@ void ElectronicsElementSpice::ModifyData(Space space, unsigned int & size, doubl
 	delete gBufferGraph;
 }
 
-void ElectronicsElementSpice::Init(const string & file, string & input, string & output)
+void ElectronicsElementSpice::Init(const string & file, const string & input, const string & output)
 {
 	SetName(file);
 	//spice takes also non const sampling everything

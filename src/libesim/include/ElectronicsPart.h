@@ -8,7 +8,9 @@
 #include "ElectronicsElementData.h"
 #include "ElectronicsElementSPar.h"
 #include "ElectronicsElementSpice.h"
+#include "ElectronicsElementLTSpice.h"
 #include "ElectronicsElementDiscriminator.h"
+#include "ElectronicsElementAmplifier.h"
 
 namespace Electronics
 {
@@ -38,11 +40,23 @@ namespace Electronics
 		 * @param input name of input net
 		 * @param output name of output net
 		 */
-		void AddElementSpice(const std::string & file, std::string & input, std::string & output)
+		void AddElementSpice(const std::string & file, const std::string & input, const std::string & output)
 		{
 			AddElement(new ElectronicsElementSpice(file, input, output));
 		}
 
+		/**
+		 * add spice circuit
+		 * @param path path to LTSpice (including wine) 
+		 * @param file filename, has to include .tran command with correct time length
+		 * @param input name of input PWL file
+		 * @param output name of output net
+		 */
+		void AddElementLTSpice(const std::string & path, const std::string & file, const std::string & input, const std::string & output)
+		{
+			AddElement(new ElectronicsElementLTSpice(path, file, input, output));
+		}
+		
 		/**
 		 * add discriminator
 		 * @param threshold threshold voltage
@@ -54,6 +68,16 @@ namespace Electronics
 		void AddElementDiscriminator(double threshold, double low = 0, double high = 1, double hysteresis = 0, double deadtime = 0, double risetime = 0)
 		{
 			AddElement(new ElectronicsElementDiscriminator(threshold, low, high, hysteresis, deadtime, risetime));
+		}
+
+		/**
+		 * add amplifier
+		 * @param gain amplifier gain
+		 * @param bandwidth amplifier bandwidth
+		 */
+		void AddElementAmplifier(double gain, double bandwidth = 0)
+		{
+			AddElement(new ElectronicsElementAmplifier(gain, bandwidth));
 		}
 		
 		/**

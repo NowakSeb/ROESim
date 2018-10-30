@@ -2,6 +2,7 @@
 #define _PULSEDATA_H_
 
 #include <fstream>
+#include <sstream>
 #include <list>
 #include <vector>
 #include <TFile.h>
@@ -24,8 +25,11 @@ namespace MDTPulse
 		virtual ~PulseData();
 		
 		//load pulse data, all old pulses are deleted
-		void LoadPulsesFromDir(std::string dir, std::string extension, double radius);
-		
+		void LoadPulsesFromDir(std::string dir, std::string extension, double radius, unsigned int maxfiles = 0);
+
+		//load pulse from root file, all old pulses are deleted
+		void LoadPulsesFromRootFile(TFile & file, TString dir, double radius, unsigned int maxfiles = 0);
+
 		//load background data
 		void LoadBackgroundFromDir(std::string dir, std::string extension)
 		{
@@ -53,13 +57,16 @@ namespace MDTPulse
 		}
 
 		//process and stor data in root file
-		void ApplyElectronics(Electronics::ElectronicsPart & part, std::string dir);
+		void ApplyElectronics(Electronics::ElectronicsPart & part, TString dir, unsigned int maxfiles = 0, unsigned int mes = 0);
+
+		//process and stor data in root file
+		void ApplyElectronicsOnRootFile(Electronics::ElectronicsPart & part, TFile & file, TString dirin, TString dirout, unsigned int maxfiles = 0, unsigned int mes = 0);
 		
 		//store input and background data in root file
 		void WriteData();
 
 		//return graph with time as a function of the radius (rt-relation)
-		void StoreTimeRadiusGraph(std::string file);
+		void CalculateRTRelation(std::string file, double width, unsigned int bins);
 
 		//return graph with time as a function of the radius (rt-relation)
 		void SetRTRelation(std::string file);
@@ -84,6 +91,9 @@ namespace MDTPulse
 		
 		//root file
 		TFile * m_File;
+
+		//root file
+		TFile m_InputFile;
 		
 		//store intermediate data
 		bool m_Debug;
@@ -101,13 +111,17 @@ namespace MDTPulse
 		TTree * m_ResultTree;
 
 		//support struct for m_ResultTree
-		TreeStruct m_TreeStruct;
+		TreeStruct * m_TreeStruct;
 		
 		//list with all applied radii
 		std::list<double> m_RadiiList;
 		
 		//TGraph with rt relation
 		TGraph * m_RT;
+		TGraph * m_TR;
+		
+		//init result tree 
+		TTree * InitResTree(TString name, TreeStruct * data);
 		
 		//add second graph on top of first
 		static void AddGraph(TGraph * base, TGraph * add, double time);
@@ -117,6 +131,9 @@ namespace MDTPulse
 		
 		//rt conversion
 		double ConvertRT(double time);
+		
+		//update m_ResultTree with rt relation
+		void UpdateRTRelation(TGraph * rt);
 		
 		//scales the graphs in the given list
 		template< class container >
@@ -135,7 +152,7 @@ namespace MDTPulse
 
 		//loads all files from a given dir and stores in the given list
 		template< class container >
-		void LoadFromDir(std::string dir, std::string extension, container & pulselist)
+		void LoadFromDir(std::string dir, std::string extension, container & pulselist, unsigned int maxfiles = 0)
 		{
 			TSystemDirectory pDir(dir.c_str(), dir.c_str());
 			TList * pFileList = pDir.GetListOfFiles();
@@ -144,6 +161,7 @@ namespace MDTPulse
 				TSystemFile * pFile;
 				TString pName;
 				TIter next(pFileList);
+				unsigned int pCounter = 0;
 				while ((pFile=(TSystemFile*)next()))
 				{
 					pName = pFile->GetName();
@@ -154,6 +172,10 @@ namespace MDTPulse
 						auto pGraph = new TGraph(pFullName.c_str());
 						pulselist.push_back(pGraph);
 					}
+					if (pCounter == maxfiles && maxfiles > 0) {
+						break;
+					}
+					pCounter++;
 				}
 			}
 		}
@@ -182,6 +204,30 @@ namespace MDTPulse
 			pulselist.clear();
 		}
 	};
+	
+	//loads all files from a given dir and stores in the given list
+	template< class container >
+	void LoadFromRFile(TFile & file, TString dir, container & pulselist, unsigned int maxfiles = 0)
+	{
+		if (!file.cd(dir)) {
+			std::stringstream pStream;
+			pStream << "The dir " << dir << " does not exit in the given root file";
+			throw pStream.str();
+		}
+		unsigned int pCounter = 0;
+		TKey * pKey;
+		TIter pNextKey (gDirectory->GetListOfKeys());
+		while ((pKey = (TKey*) pNextKey()))
+		{
+			TGraph * pData = dynamic_cast<TGraph *> (pKey->ReadObj());
+			pData->SetName(pKey->GetName());
+			pulselist.push_back(pData);
+			if (pCounter == maxfiles && maxfiles > 0) {
+				break;
+			}
+			pCounter++;
+		}
+	}
 }
 
 
