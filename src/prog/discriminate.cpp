@@ -11,12 +11,14 @@ using namespace std;
 using namespace MDTPulse;
 using namespace Electronics;
 
+void PrepareCircuitASD(ElectronicsPart & part, bool rt);
+void PrepareCircuitVBLR(ElectronicsPart & part, bool rt);
+
 int main(int argc, char* argv[])
 {
 	vector<string> pDirs;
 	vector<double> pRadii;
-	ElectronicsPart pPart;
-	
+// 
 	bool pASD = true;
 	bool pRT = false;
 	
@@ -53,25 +55,34 @@ int main(int argc, char* argv[])
 	
 	try {
 		//prepare part
+		ElectronicsPart pPart;
 		string pRTFile;
 		if (pASD) {
+			PrepareCircuitASD(pPart, pRT);
 			pRTFile = "../../data/rt_ASD.txt";
 		}
 		else {
+			PrepareCircuitVBLR(pPart, pRT);
 			pRTFile = "../../data/rt_BLR.txt";
 		}
 		
 		//pulse data
-		TFile pInput(pNameIn.c_str(), "READ");
-		
-		PulseData pData(pNameOut, pInput);
+		PulseData pData(pNameOut);
 
 		pData.SetRTRelation(pRTFile);
+		
+		//loop over dirs
+		TFile pInput(pNameIn.c_str());
+		if (pASD) {
+			pData.ApplyElectronicsOnRootFile(pPart, pInput, "ASD", "ASD");
+		}
+		else {
+			pData.ApplyElectronicsOnRootFile(pPart, pInput, "BLR", "BLR");
+		}
 		if (pRT) {
-			pData.CalculateRTRelation(pRTFile, 4.95e-6, 5.2e-6);//4.95e-6, 5.2e-6
+			pData.CalculateRTRelation(pRTFile);
 		}
 
-		
 		//calculate resolution
  		double pRes = pData.GetResolution(1.0, 75);
 		double pEffTotal = pData.GetEfficiency();
@@ -85,4 +96,25 @@ int main(int argc, char* argv[])
 
 // 	pGraph.Write("data");
 	return 0;
+}
+
+void PrepareCircuitVBLR(ElectronicsPart & part, bool rt)
+{
+	if (rt) {
+		part.AddElementDiscriminator(1, 0, 1, 0, 100.e-6); //-0.05 is correct
+	}
+	else {
+		part.AddElementDiscriminator(1, 0, 1, 0, 100.e-9); //-0.05 is correct
+	}
+}
+
+
+void PrepareCircuitASD(ElectronicsPart & part, bool rt)
+{
+	if (rt) {
+		part.AddElementDiscriminator(-0.05, 0, 1, 0, 100.e-6);
+	}
+	else {
+		part.AddElementDiscriminator(-0.05, 0, 1, 0, 100.e-9);
+	}
 }

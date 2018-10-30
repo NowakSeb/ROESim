@@ -18,31 +18,54 @@ int main(int argc, char* argv[])
 {
 	vector<string> pDirs;
 	vector<double> pRadii;
-// 
+	bool pASD = true;
+	
+	if (argc != 4) {
+		cout << "3 Arguments are obligatory: <input> <output> <ASD or BLR>" << endl;
+		return - 1;
+	}
+	string pNameIn = argv[1];
+	string pNameOut = argv[2];
+	
+	if (string(argv[3]) == "ASD") {
+		pASD = true;
+	}
+	else if (string(argv[3]) == "BLR") {
+		pASD = false;
+	}
+	else {
+		cout << "Argument 3 has to be either ASD or BLR. " << argv[3] << " is not valid." << endl;
+		return -2;
+	}
+	
+	cout << "Input: " << pNameIn << "; Output: " << pNameOut << "; Type: " << argv[3] << endl; 
+	
 	try {
 		//prepare part
-		ElectronicsPart pPartASD;
-		PrepareCircuitASD(pPartASD);
-		ElectronicsPart pPartBLR;
-		PrepareCircuitVBLR(pPartBLR);
-		
-		string pOutASD = "ASD_shaped_" + string(argv[1]) + ".root";
-		string pOutBLR = "BLR_shaped_" + string(argv[1]) + ".root";
+		ElectronicsPart pPart;
+		if (pASD) {
+			PrepareCircuitASD(pPart);
+		}
+		else {
+			PrepareCircuitVBLR(pPart);
+		}
 		
 		//pulse data
-		PulseData pDataASD(pOutASD);
-		PulseData pDataBLR(pOutBLR);
-		string pRTFile = "/home/snowak/MPI/Electronics2018/ROESim/testdata/garfield_pulse_nodelta/rt.txt";
+		PulseData pData(pNameOut);
 
- 		pDataASD.SetRTRelation(pRTFile);
+		string pRTFile = "/home/snowak/MPI/Electronics2018/ROESim/testdata/garfield_pulse_nodelta/rt.txt";
+ 		pData.SetRTRelation(pRTFile);
 		
 		//loop over dirs
-		TString pIn = TString::Format("raw_%s.root", argv[1]);
-		TFile pInput(pIn);
+		TFile pInput(pNameIn.c_str());
 		
-//		pDataASD.ApplyElectronicsOnRootFile(pPartASD, pInput, "raw", "ASD");
+		if(pASD) {
+			pData.ApplyElectronicsOnRootFile(pPart, pInput, "raw", "ASD");
+		}
+		else {
+			pData.ApplyElectronicsOnRootFile(pPart, pInput, "raw", "BLR");
+		}
 		
-		pDataBLR.ApplyElectronicsOnRootFile(pPartBLR, pInput, "raw", "BLR",100);
 	}
 	catch (std::string ex) {
 		cout << ":Err " << ex << endl;
@@ -56,7 +79,7 @@ void PrepareCircuitVBLR(ElectronicsPart & part)
 {
 	string pPath = "wine /home/snowak/.wine/drive_c/Program\\ Files/LTC/LTspiceXVII/XVIIx64.exe";
 //	string pFile = "../../spice/AnalogChannelLTSpice/AnalogChannelCurrentSource_x2.asc";
-	string pFile = "AnalogChannelCurrentSource_x2.asc";
+ 	string pFile = "AnalogChannelCurrentSource_x2.asc";
 	part.SetDebug();
  	part.AddElementAmplifier(10000.);
 	part.AddElementLTSpice(pPath, pFile, "data.sig", "vo");//tp4

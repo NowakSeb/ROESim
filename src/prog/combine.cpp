@@ -14,10 +14,21 @@ using namespace Electronics;
 void PrepareCircuit(ElectronicsPart & part);
 void PrepareCircuitDis(ElectronicsPart & part);
 
-int main()
+int main(int argc, char* argv[])
 {
 	vector<string> pDirs;
 	vector<double> pRadii;
+	
+	if (argc !=3) {
+		cout << "2 Arguments are obligatory: <BG Rate in Hz> <filename (.root is added)>." << endl;
+		return - 1;
+	}
+	double pRate;
+	string pName = argv[2] + string(".root");
+	stringstream pStream(argv[1]);
+	pStream >> pRate;
+	
+	cout << "File " << pName << " with " << pRate << " Hz background." << endl; 
 	
 	try {
 		//prepare part
@@ -25,7 +36,7 @@ int main()
 		PrepareCircuitDis(pPart);
 		
 		//pulse data
-		PulseData pData("raw_100k.root");
+		PulseData pData(pName);
 		// 		PulseData pData("raw_input.root");
 		
 		pDirs.push_back("/home/snowak/MPI/Electronics2018/ROESim/testdata/garfield_pulse/0.5");
@@ -60,15 +71,16 @@ int main()
 		pData.ScaleBackground(1, -1./10000/2.);
 		//now data is us and uA -> use SI here
 		
+		pData.WriteData();
+		
 		//loop over dirs
 		for(unsigned int i = 0; i < pDirs.size(); i++) {
 			pData.LoadPulsesFromDir(pDirs[i], "sig", pRadii[i], 500);
 			//now data is us and uA -> use SI here
-			pData.ScalePulses(1e-9, 1e-6);
-			pData.CombinePulses(100e3, 0*4.0e-7);
 			stringstream pStream;
 			pStream << "raw/" << pRadii[i];
-			pData.ApplyElectronics(pPart, pStream.str(), 100);
+			pData.ScalePulses(1e-9, 1e-6);
+			pData.CombinePulses(pRate, 10e-9, 2, pStream.str().c_str());
 		}
 		
 	}

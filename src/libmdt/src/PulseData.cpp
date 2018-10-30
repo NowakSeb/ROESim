@@ -66,6 +66,37 @@ PulseData::PulseData(std::string file)
 	m_ResultTree = InitResTree("res", m_TreeStruct);
 }
 
+PulseData::PulseData(std::string output, TFile & input)
+{
+	m_RT = 0;
+	m_TR = 0;
+	m_FileName = output;
+	m_Debug = false;
+	m_TreeStruct = new TreeStruct();
+	
+	input.cd();
+	TTree * pTree = dynamic_cast<TTree *> (input.Get("res"));
+	
+	if (pTree == 0) {
+		throw string("Root file does not conatin result tree");
+	}
+	
+	m_File = new TFile(m_FileName.c_str(), "RECREATE");
+	m_File->cd();
+
+	m_ResultTree = pTree->CloneTree();
+	
+	m_ResultTree->GetBranch("event")->SetAddress(&(m_TreeStruct->event));
+	m_ResultTree->GetBranch("radius")->SetAddress(&(m_TreeStruct->radius));
+	m_ResultTree->GetBranch("time")->SetAddress(&(m_TreeStruct->time));
+	m_ResultTree->GetBranch("dradius")->SetAddress(&(m_TreeStruct->dradius));
+	
+	//get radii list
+	int pLen = m_ResultTree->Draw("radius","");
+	m_RadiiList = list<double>(m_ResultTree->GetV1(), m_ResultTree->GetV1() + pLen);
+}
+
+
 PulseData::~PulseData()
 {
 	DeleteList<std::list<TGraph *>>(m_PulseList);
@@ -77,7 +108,7 @@ PulseData::~PulseData()
 	//destroy file
 	m_File->cd();
 	m_ResultTree->Write();
-	m_ResultTree->Delete();
+//	m_ResultTree->Delete();
 	m_File->Close();
 	m_File->Delete();
 	delete m_TreeStruct;
@@ -112,18 +143,18 @@ void PulseData::LoadPulsesFromRootFile(TFile & file, TString dir, double radius,
 	m_RadiiList.push_back(radius);
 }
 
-void PulseData::CombinePulses(double rate, double noise, unsigned int length)
+void PulseData::CombinePulses(double rate, double noise, unsigned int length, TString dir)
 {
 	unsigned int pIndex = 0;
 	DeleteList<std::list<TGraph *>>(m_CombindedList);
 	for(auto pIt = m_PulseList.begin(); pIt != m_PulseList.end(); pIt++) {
 		double pLength = GetLength(*pIt);
 		//window -length*pulse until end of pulse
-		unsigned int pHits = rate * pLength * (length +1); //average hits in window
-		pHits = m_Rand.Poisson(pHits); //now with random number gen
-//		auto pGraph = new TGraph(**pIt);
+		double pHitsAVG = rate * pLength * (length +1); //average hits in window
+		unsigned int pHits = m_Rand.Poisson(pHitsAVG); //now with random number gen
+		//		auto pGraph = new TGraph(**pIt);
 		auto pGraph = CopyGraph(*pIt);
-		Extend(pGraph, pLength, noise); //negative time
+		Extend(pGraph, length * pLength, noise); //negative time
 		//add hits
 		for(unsigned int i = 0; i < pHits; i++) {
 			unsigned int pBGIndex = m_Rand.Integer(m_BackgroundList.size());
@@ -136,6 +167,17 @@ void PulseData::CombinePulses(double rate, double noise, unsigned int length)
 		
 		pIndex++;
 // 		break;
+	}
+	
+	if (dir != "") {
+		m_File->cd();
+		m_File->mkdir(dir);
+		m_File->cd(dir);
+		unsigned int pIndex = 0;
+		for(auto pIt = m_CombindedList.begin(); pIt != m_CombindedList.end(); pIt++) {
+			(*pIt)->Write(TString::Format("Pulse_%i", pIndex));
+			pIndex++;
+		}
 	}
 }
 
@@ -283,6 +325,10 @@ void PulseData::SetRTRelation(std::string file)
 		m_RT->GetPoint(i, x, y);
 		m_TR->SetPoint(i, y, x);
 	}
+	
+	if (m_ResultTree != 0) {
+		UpdateRTRelation(m_RT);
+	}
 }
 
 double PulseData::ConvertRT(double time)
@@ -293,7 +339,7 @@ double PulseData::ConvertRT(double time)
 	return 0;
 }
 
-void PulseData::CalculateRTRelation(std::string file, double width, unsigned int bins)//min, double max)
+void PulseData::CalculateRTRelation(const std::string & file, double min, double max)
 {
 	ofstream pFile;
 	unsigned int pCounter = 0;
@@ -305,68 +351,6 @@ void PulseData::CalculateRTRelation(std::string file, double width, unsigned int
 	m_File->mkdir("rt");
 	m_File->cd("rt");
 	
-
-// 	for(unsigned int j = 0; j < iterations; j++) {
-// 		TString dir = TString::Format("rt/it_%d", j);
-// 		m_File->mkdir(dir);
-// 		m_File->cd(dir);
-// 
-// 		for(unsigned int pIndex  = 0; pIndex < m_RadiiList.size(); pIndex++) { // loop over all radii
-// 			ROOT::Minuit2::MnUserParameters pUPar;
-// 			RTFit pFit(m_ResultTree, m_RT, pUPar, pIndex, 100);
-// 			//the fit parameters are set inside the fit class -> makes life easier
-// 			
-// 			ROOT::Minuit2::MnMigrad pMigrad(pFit, pUPar);
-// 			ROOT::Minuit2::FunctionMinimum pMin = pMigrad();
-// 			
-// //			auto pGraph = new TGraph();
-// 			pFit.GetRT(m_RT, pMin);
-// 			m_RT->Write(TString::Format("res_%i", pIndex));
-// 			
-// 			UpdateRTRelation(m_RT);
-// 		}
-// 
-// 		for(auto pIt = m_RadiiList.begin(); pIt != m_RadiiList.end(); pIt++) { // loop over all radii
-// 			//per radii
-// 			auto pCondition = TString::Format("radius < %f && radius > %f", *pIt + 0.01, *pIt - 0.01);
-// 			TString pName = TString::Format("histo_%f", *pIt);
-// 			auto pHisto = new TH1F(pName, pName, bins, -1, +1);
-// 			TString pCommand = TString::Format("dradius - %f >> %s", *pIt, pName.Data());
-// 			m_ResultTree->Draw(pCommand, pCondition);
-// 			pHisto->Write(pName);
-// 			pHisto->Delete();
-// 		}
-// 	}
-// 	
-// 	return;
-	
- 	auto pFitPoly = new TF1("polyfit", "pol2", 0, 7);//fit function
-// 	
-// 	int pLength = m_ResultTree->Draw("radius:time", "");
-// 	double * pRad = m_ResultTree->GetV1();
-// 	double * pTime = m_ResultTree->GetV2();
-// 
-// 	TProfile * pProfile = new TProfile("prof", "prof", 20, 0, 7);
-// 
-// 	for(unsigned int i = 0; i < pLength; i++) {
-// 		pProfile->Fill(pRad[i], pTime[i]);
-// 	}
-// 	pProfile->Fit("polyfit", "QR+");
-// 	pProfile->Write();
-// 	
-// 	if (m_TR == 0) {
-// 		m_TR = new TGraph(m_RadiiList.size());
-// 		m_RT = new TGraph(m_RadiiList.size());
-// 	}
-// 	
-// 	double pStep = 7./m_TR->GetN();
-// 	for(unsigned int i = 0; i < m_TR->GetN(); i++) {
-// 		m_RT->SetPoint(i, pFitPoly->Eval(i*pStep), i*pStep);
-// 		m_TR->SetPoint(i, i*pStep, pFitPoly->Eval(i*pStep));
-// 	}
-// 	UpdateRTRelation(m_RT);
-// // 	return;
-
 	if (m_TR == 0) {
 		m_TR = new TGraph(m_RadiiList.size());
 		m_RT = new TGraph(m_RadiiList.size());
@@ -377,7 +361,10 @@ void PulseData::CalculateRTRelation(std::string file, double width, unsigned int
 	}
 	ofstream pRTFile(file);
 	for(auto pIt = m_RadiiList.begin(); pIt != m_RadiiList.end(); pIt++) { // loop over all radii
-		auto pCondition = TString::Format("radius < %f && radius > %f", *pIt + 0.01, *pIt - 0.01);
+		TString pCondition = TString::Format("radius < %f && radius > %f", *pIt + 0.01, *pIt - 0.01);
+		if (min != 0 || max != 0) {
+			pCondition += TString::Format(" && time < %f*1e-6 && time > %f*1e-6", max*1e6, min*1e6);
+		}
 		//all
 		//per radii
 		TString pName = TString::Format("histo_%f", *pIt);
@@ -400,95 +387,6 @@ void PulseData::CalculateRTRelation(std::string file, double width, unsigned int
 	UpdateRTRelation(m_RT);
 	
 	return;
-	
-	//prepare width
-	std::map<double, double> pWidth;
-	for(auto pIt = m_RadiiList.begin(); pIt != m_RadiiList.end(); pIt++) { // loop over all radii
-		pWidth[*pIt] = width;
-	}
-
-	pFitPoly->Delete();
-	pFitPoly = new TF1("polyfit", "pol5", 0, 7);//fit function
-	
-	
-	for(unsigned int j = 0; j < iterations; j++) {
-		TString dir = TString::Format("rt/it_%d", j);
-		m_File->mkdir(dir);
-		m_File->cd(dir);
-		
-		auto pGraph = new TGraph();
-		
-		for(auto pIt = m_RadiiList.begin(); pIt != m_RadiiList.end(); pIt++) { // loop over all radii
-			auto pFitFunction = new TF1("resfit", "gaus",-pWidth[*pIt], +pWidth[*pIt]);//fit function
-			auto pCondition = TString::Format("radius < %f && radius > %f", *pIt + 0.01, *pIt - 0.01);
-			//all
-			//per radii
-			TString pName = TString::Format("histo_%f", *pIt);
-			auto pHisto = new TH1F(pName, pName, bins, -pWidth[*pIt], +pWidth[*pIt]);
-			TString pCommand = TString::Format("dradius - %f >> %s", *pIt, pName.Data());
-			m_ResultTree->Draw(pCommand, pCondition);
-			pFitFunction->SetParameter(1, pHisto->GetMean());
-			pFitFunction->SetParameter(2, pHisto->GetRMS());
-			pHisto->Fit("resfit", "QR+");
-			pHisto->Write(pName);
-			pHisto->Delete();
-			
-			double pTime = m_TR->Eval(*pIt + 0.5*pFitFunction->GetParameter(1));
-			pWidth[*pIt] = 5 * pFitFunction->GetParameter(2);
-			//pWidth += 5 * pFitFunction->GetParameter(2);
- 			cout << *pIt << " " << pFitFunction->GetParameter(1) << endl;
-			pGraph->SetPoint(pGraph->GetN(), *pIt, pTime);
-			pFitFunction->Delete(); //not needed anymore
-		}
-		
-		pGraph->Sort();
-		pGraph->Fit(pFitPoly, "Q");
-		pGraph->Write("rt");
-
-		if (j == iterations - 1) {
-			//open in last iteration
-			pFile.open(file);
-		}
-		
-		for(int i = 0; i < pGraph->GetN(); i++) {
-			double x, y;
-			pGraph->GetPoint(i, x, y);
-			if (j == iterations - 1) {
-				//last iteration -> go to file
-				pFile << pFitPoly->Eval(x) <<"\t" << x << endl;
-			}
- 			pGraph->SetPoint(i, pFitPoly->Eval(x), x);
-// 			pGraph->SetPoint(i, y, x);
-		}
-		pGraph->Write("tr");
-		UpdateRTRelation(pGraph);
-		
-		pGraph->Delete();
-	}
-	pFile.close();
-	
-/*
-	
-	
-	for(auto pIt = m_RadiiList.begin(); pIt != m_RadiiList.end(); pIt++) {
-		TString pName = TString::Format("%.1f", *pIt);
-		auto * pHisto = new TH1F("histo", "histo", 1000, min, max);
-		auto pString = TString::Format("radius < %f && radius > %f && time > %f && time < %f", *pIt + 0.01, *pIt - 0.01, min, max);
-		m_ResultTree->Draw("time>>histo", pString);
-		auto pFitFunction = new TF1("rtfit", "gaus");//, pHisto->GetMean() -0.2, pHisto->GetMean() + 0.2);
-		pFitFunction->SetParameter(1, pHisto->GetMean());
-		pFitFunction->SetParameter(2, pHisto->GetRMS());
-		pHisto->Fit("rtfit", "QL");
-		auto pFitFunctionEx = new TF1("rtfit1", "rtfit", pFitFunction->GetParameter(1) - 0.2, pFitFunction->GetParameter(1) + 0.2);
-		pHisto->Fit("rtfit1", "QR");
-		pFile << pFitFunction->GetParameter(1) << "\t" << *pIt << endl;
-		pGraph->SetPoint(pGraph->GetN(), pFitFunctionEx->GetParameter(1), *pIt);
-// 		pGraph->SetPoint(pGraph->GetN(), pHisto->GetMean(), *pIt);
-		pHisto->Write(pName);
-		pHisto->Delete();
-		pFitFunction->Delete();
-		pFitFunctionEx->Delete();
-	}*/
 }
 
 double PulseData::GetResolution(double width, unsigned int bins)
@@ -547,10 +445,12 @@ double PulseData::GetResolution(double width, unsigned int bins)
 	return pRes;
 }
 
-// double PulseData::GetEff3(double res)
-// {
-// 	
-// }
+double PulseData::GetEfficiency(double width)
+{
+	auto pHistoAll = new TH1F("histo_all", "histo", 1, -width, +width); //histogram for all radii
+	auto pHistoSelect = new TH1F("histo_sel", "histo", 1, -width, +width); //histogram for all radii
+}
+
 
 void PulseData::UpdateRTRelation(TGraph * rt)
 {

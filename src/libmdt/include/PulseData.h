@@ -19,8 +19,12 @@ namespace MDTPulse
 	{
 	public:
 		
-		// Constructor
+		// Constructor with outputfile
 		PulseData(std::string file);
+
+		// Constructor with output file input file for tree usage)
+		PulseData(std::string output, TFile & input);
+		
 		// Destructor
 		virtual ~PulseData();
 		
@@ -48,8 +52,8 @@ namespace MDTPulse
 			ApplyScaling<std::vector<TGraph *>>(x, y, m_BackgroundList);
 		}
 
-		//multiples of pulse length
-		void CombinePulses(double rate, double noise = 0, unsigned int length = 5);
+		//multiples of pulse length, if dir != "" store in dir
+		void CombinePulses(double rate, double noise = 0, unsigned int length = 5, TString dir = "");
 		
 		void SetDebug(bool state)
 		{
@@ -66,13 +70,17 @@ namespace MDTPulse
 		void WriteData();
 
 		//return graph with time as a function of the radius (rt-relation)
-		void CalculateRTRelation(std::string file, double width, unsigned int bins);
+		void CalculateRTRelation(const std::string & file, double min = 0, double max = 0);
 
 		//return graph with time as a function of the radius (rt-relation)
 		void SetRTRelation(std::string file);
 		
 		//return average resolution
 		double GetResolution(double width, unsigned int bins);
+		
+		//return average efficiency within given width (+-), 0 for total efficiency
+		double GetEfficiency(double width = 0);
+		
 		
 	private:
 		
